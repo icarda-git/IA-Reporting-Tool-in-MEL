@@ -1,0 +1,717 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet box grey-cascade" id="review_portlet">
+            <div class="portlet-title">
+                <div class="tools">
+                    <a href="javascript:;" class="collapse">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <h4>Overview</h4>
+                <div class="table-toolbar">
+                    <div class="form-horizontal">
+                        <div class="form-group floating-filters">
+                            <div class="col-md-4 filter_container">
+                                <label class="control-label">
+                                    1st Reporting Year
+                                    <i class="fa fa-exclamation-circle popovers"
+                                       data-trigger="hover" data-placement="bottom" data-container="body"
+                                       data-content="Remove the selected year(s) to view the data for all reported years."></i>
+                                    <div class="checkbox-inline aligned-check-box">
+                                        <label class="checkbox-inline">
+                                            <input type="checkbox" class="show_all_years">
+                                            Select all reported years
+                                        </label>
+                                    </div>
+                                </label>
+                                <select class="form-control select2 ia_report_reporting_year ia_review_dashboard_filters"
+                                        data-default_year="<?= date('Y') - 1 ?>"
+                                        multiple data-placeholder="Select reporting year...">
+                                    <option value=""></option>
+                                    <?php foreach ($this->reporting_years as $_year) { ?>
+                                        <option value="<?= $_year ?>"><?= $_year ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4 filter_container">
+                                <label class="control-label">
+                                    Last Reporting Year
+                                    <i class="fa fa-exclamation-circle popovers"
+                                       data-trigger="hover" data-placement="bottom" data-container="body"
+                                       data-content="Remove the selected year(s) to view the data for all reported years."></i>
+                                    <div class="checkbox-inline aligned-check-box">
+                                        <label class="checkbox-inline">
+                                            <input type="checkbox" class="show_all_years">
+                                            Select all reported years
+                                        </label>
+                                    </div>
+                                </label>
+                                <select class="form-control select2 ia_report_last_reporting_year ia_review_dashboard_filters"
+                                        data-default_year="<?= date('Y') - 1 ?>"
+                                        multiple data-placeholder="Select reporting year...">
+                                    <option value=""></option>
+                                    <?php foreach ($this->reporting_years as $_year) { ?>
+                                        <option value="<?= $_year ?>" <?= $_year == date('Y') - 1 ? 'selected' : '' ?>><?= $_year ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4 filter_container">
+                                <label class="control-label">Organization</label>
+                                <select class="form-control select2partner ia_report_partner_id ia_review_dashboard_filters"
+                                        multiple data-placeholder="Select Organization..."
+                                        custom_ids="iaReportPartnersIds">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overview" id="metrics_chart">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <h5 class="control-label">
+                                        <b>Restricted Arrangements (Aggregate)</b>
+                                    </h5>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>LEAs: </strong>
+                                                    <span id="lea_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>RUAs: </strong>
+                                                    <span id="rua_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>IP Applications (Patent): </strong>
+                                                    <span id="ip_patent_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>IP Applications (PVP): </strong>
+                                                    <span id="ip_pvp_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>Total (Aggregate): </strong>
+                                                    <span id="total_agreements_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <h5 class="control-label" style="color: #508fd0">
+                                        <b> Restricted Arrangements (Unique)</b>
+                                    </h5>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat dashboard-stat-blue">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>LEAs: </strong>
+                                                    <span id="lea_unique_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat dashboard-stat-blue">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>RUAs: </strong>
+                                                    <span id="rua_unique_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat dashboard-stat-blue">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>IP Applications (Patent): </strong>
+                                                    <span id="ip_patent_unique_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat dashboard-stat-blue">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>IP Applications (PVP): </strong>
+                                                    <span id="ip_pvp_unique_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat dashboard-stat-blue">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>Total (Unique): </strong>
+                                                    <span id="total_agreements_unique_count">0</span>
+                                                </h4>
+                                                <div class="additional_counts"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" style="display: none">
+                                <div class="col-md-2">
+                                    <h5 class="control-label">
+                                        <b>Registers</b>
+                                    </h5>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>Policies</strong><br><br> <span
+                                                            id="policy_count">0</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>Other resources</strong><br><br> <span
+                                                            id="other_document_count">0</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>Patents</strong><br><br> <span
+                                                            id="patent_count">0</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>PVPs</strong><br><br> <span id="pvp_count">0</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dashboard-stat">
+                                        <div class="visual">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </div>
+                                        <div class="details">
+                                            <div class="desc">
+                                                <h4>
+                                                    <strong>Trademarks</strong><br><br> <span
+                                                            id="trademark_count">0</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-2"></div>
+                            <div class="col-md-10">
+                                <div class="checkbox-list">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" class="show_responsibilities">
+                                        show below only the items requiring my attention
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <?php if (App_Function_Privileges::canReviewIAReport(null)) { ?>
+                    <div style="text-align: right;">
+                        <a href="javascript:void(0);"
+                           class="btn btn-default btn-sm stripe-down stripe-down-red export_pdf"
+                           data-href="/ia/iareportpdf" data-all_year_export="true">
+                            <i class="fa fa-file-pdf-o"></i> Export consolidated report as PDF
+                        </a>
+                    </div>
+                <?php } ?>
+
+                <h4>Center IA Reports</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="general_ia_report" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <table class="table table-striped table-bordered table-hover" id="ia_report_table">
+                    <thead>
+                    <tr>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Year
+                        </th>
+                        <th>
+                            Year
+                        </th>
+                        <th>
+                            Partner ID
+                        </th>
+                        <th>
+                            Organization
+                        </th>
+                        <th>
+                            Status
+                        </th>
+                        <th>
+                            LEA
+                        </th>
+                        <th>
+                            MLS
+                        </th>
+                        <th>
+                            RUA
+                        </th>
+                        <th>
+                            MLS
+                        </th>
+                        <th>
+                            IP (Patent)
+                        </th>
+                        <th>
+                            MLS
+                        </th>
+                        <th>
+                            IP (PVP)
+                        </th>
+                        <th>
+                            MLS
+                        </th>
+                        <th>
+                            Review status
+                        </th>
+                        <th>
+                            Actions
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                </table>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>1.2. Center capacity related to IA management</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="1_2" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <hr>
+                <h4>1.3. CRP/Platform capacity related to IA management</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="1_3" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div id="ia_report_crp_table_holder"></div>
+
+                <hr>
+                <h4>1.4.a Center policies</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="1_4_a" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div id="ia_management_document_table_holder"></div>
+
+                <hr>
+                <h4>1.4.b Center other resources related to IA Management</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="1_4_b" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div id="ia_management_other_document_table_holder"></div>
+
+                <hr>
+                <h4>1.5.a. Center IA Portfolio of registered IP (Patents)</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="1_5_a" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div class="table_holder" id="ia_portfolio_document_table_Patent_holder"></div>
+
+                <hr>
+                <h4>1.5.b. Center IA Portfolio of registered IP (PVPs)</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="1_5_b" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div id="ia_portfolio_document_table_PVP_holder"></div>
+
+                <hr>
+                <h4>1.5.c. Center IA Portfolio of registered IP (Trademarks)</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="1_5_c" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div id="ia_portfolio_document_table_Trademark_holder"></div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>1.6. Please describe key new or ongoing partnerships, arrangements, or collaborations that were
+                        impactful (eg: new or ongoing partnerships, arrangements, or collaborations that supported the
+                        conservation and widespread use of all genetic resources for food and agriculture or that
+                        otherwise furthered the CGIAR Vision) during the reporting cycle</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="1_6" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>1.7. Please describe the Center’s approach(es) to maximizing the global accessibility and impact
+                        of its Intellectual Assets</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="1_7" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>1.8. Please provide any relevant highlights, trends, case studies, practices, LEA/RUA/Patent
+                        filings/PVP filings that you would like to highlight for the CGIAR Annual IA Management
+                        Report</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="1_8" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>1.9. Additional Notes (anything else to report regarding this section)</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="1_9" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>2.1. Facilitated access to Plant Genetic Resources for Food and Agriculture held by CGIAR
+                        Centers within the purview of the Treaty through Standard Material Transfer Agreements
+                        (SMTA)</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="2_1" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>2.2. Measures for ensuring that acquisition and transfer of genetic resources is conducted in
+                        accordance with applicable laws</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="2_2" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <div class="reviewer_content_only">
+                    <hr>
+                    <h4>2.3. Farmers Rights</h4>
+                    <div class="form-group" style="text-align: right">
+                    <textarea name="2_3" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                        <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                           style="margin-top: 10px;">Save comments</a>
+                    </div>
+                </div>
+
+                <hr>
+                <h4>3.1. Reporting of Limited Exclusivity Agreements, Restricted Use Agreements, and IP
+                    Applications</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="3_1" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div class="table_holder" id="ia_agreement_table_holder"></div>
+
+                <hr>
+                <h4>3.2. Public disclosures associated with Limited Exclusivity Agreements, Restricted Use Agreements,
+                    and IP Applications</h4>
+                <div class="form-group" style="text-align: right">
+                    <textarea name="3_2" class="form-control general_comments_textarea" rows="3"
+                              placeholder="General comments"></textarea>
+                    <a href="javascript:void(0);" class="btn green btn-sm btn_save_general_comments"
+                       style="margin-top: 10px;">Save comments</a>
+                </div>
+                <div class="table_holder" id="ia_agreement_public_disclosure_table_holder"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<?= $this->partial('/ia/ia_report_export.phtml', array()); ?>
+<?= $this->partial('/export/export_modal.phtml', array()); ?>
+
+
+<?php $this->placeholder('styleVars')->captureStart(); ?>
+.dashboard-stat {
+background-color: unset !important;
+color: #666666 !important;
+border-bottom: solid 5px #f2f8fd;
+}
+.dashboard-stat.dashboard-stat-blue {
+color: #508fd0 !important;
+}
+.dashboard-stat .visual {
+color: #f2f8fd !important;
+}
+
+#filters_parent .btn.outline {
+width: 100%;
+}
+#filters_parent .btn.outline:not(:hover) {
+background-color: transparent;
+color: inherit;
+}
+#filters_parent .btn.outline:not(:first-child) {
+border-top: none;
+}
+.chart_container {
+min-height: 100px;
+}
+.dashboard-stat .desc h4 {
+font-size: 15px;
+}
+.dashboard-stat .details {
+height: 100%;
+width: 95%;
+}
+.dashboard-stat .additional_counts {
+position: absolute;
+right: 15px;
+}
+.dashboard-stat .additional_counts small {
+display: block;
+}
+@media (max-width: 1270px) {
+.dashboard-stat .desc h4 {
+font-size: 14px;
+}
+.dashboard-stat .additional_counts small {
+font-size: 10px;
+}
+}
+.floating-filters {
+transition: all .2s linear;
+}
+.floating-filters.filters-fixed-top {
+position: fixed;
+background-color: white;
+z-index: 999;
+top: 0;
+width: 100%;
+margin: 0;
+left: 0;
+padding-bottom: 20px;
+}
+.floating-filters.filters-fixed-top:after {
+background: linear-gradient(to right, #4f8fcd 0, #4f8fcd 20%, #be4935 20%, #be4935 40%, #dd9e37 40%, #dd9e37 60%, #c08a5c 60%, #c08a5c 80%, #5f7358 80%, #5f7358 100%);
+height: 10px;
+width: 100%;
+position: absolute;
+bottom: 0;
+left: 0;
+}
+
+.btn.stripe-down{
+border-bottom: 5px solid #3598dc;
+}
+.btn.stripe-down-red{
+border-bottom-color: #e7505a;
+}
+.checkbox-inline.aligned-check-box {
+margin-top: -20px;
+}
+<?php $this->placeholder('styleVars')->captureEnd(); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css', 'screen'); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/datatables/media/js/jquery.dataTables.min.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js'); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/admin/pages/scripts/ia/review-table-managed.js'); ?>
+<?php $this->placeholder('jsvars')->captureStart(); ?>
+
+<?php if (App_Function_Privileges::isMemberOf(12)) { //User group 12: Intellectual Property Focal Point (PMU) ?>
+    const isIpPMU = true;
+<?php } else { ?>
+    const isIpPMU = false;
+<?php } ?>
+
+<?php if (App_Function_Privileges::canReviewIAReport(null)) { ?>
+    const CanViewIaReportGeneralComments = true;
+<?php } else { ?>
+    const CanViewIaReportGeneralComments = false;
+<?php } ?>
+
+const GetAllIaReportsToReviewDataLink ='<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'getalliareportstoreview'), null, true) ?>';
+const GetIaReportSummaryDataLink ='<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'getiareportsummary'), null, true) ?>';
+
+const GetIaReportGeneralCommentsDataLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'getiareportgeneralcomments'), null, true) ?>';
+const SubmitIaReportGeneralCommentsLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'submitiareportgeneralcomments'), null, true) ?>';
+const GetIaReportResponsibilitiesDataLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'getiareportresponsibilities'), null, true) ?>';
+const general_comments = JSON.parse('<?= addslashes(Zend_Json::encode($this->general_comments)) ?>');
+window.iaReportPartnersIds = JSON.parse('<?= addslashes(Zend_Json::encode($this->ia_partners)) ?>');
+
+<?php $this->placeholder('jsvars')->captureEnd() ?>
+
+<?= $this->partial('/ia/iaReportTablesAndForms.phtml', array(
+    'ia_report_review_page' => true
+)); ?>
+
+<?php $this->placeholder('jscalls')->captureStart(); ?>
+ReviewTableManaged.init();
+<?php $this->placeholder('jscalls')->captureEnd() ?>

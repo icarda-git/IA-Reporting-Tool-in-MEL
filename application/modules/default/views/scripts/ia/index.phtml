@@ -1,0 +1,87 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet box grey-cascade">
+            <div class="portlet-title">
+                <div class="caption">
+                    Center IA Report
+                </div>
+                <div class="tools">
+                    <a href="javascript:;" class="collapse">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="table-toolbar">
+                    <?php if (App_Function_Privileges::isAdmin() || App_Function_Privileges::isMemberOf(11) || App_Function_Privileges::isIaReportContact(null)) ?>
+                    <div class="btn-group">
+                        <a href="<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'iareporting'), null, true) ?>"
+                           class="btn btn-default stripe-down-blue strip-down">
+                            Add New <i class="fa fa-plus"></i>
+                        </a>
+                    </div>
+                    <?php ?>
+                </div>
+                <table class="table table-striped table-bordered table-hover" id="ia_report_table">
+                    <thead>
+                    <tr>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Reporting Year
+                        </th>
+                        <th>
+                            Organization
+                        </th>
+                        <th>
+                            Added By
+                        </th>
+                        <th>
+                            Added date
+                        </th>
+                        <th>
+                            Modified By
+                        </th>
+                        <th>
+                            Modified date
+                        </th>
+                        <th>
+                            Status
+                        </th>
+                        <th>
+                            Actions
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?= $this->partial('/ia/ia_report_export.phtml', array()); ?>
+<?= $this->partial('/export/export_modal.phtml', array()); ?>
+
+<?php $this->placeholder('styleVars')->captureStart(); ?>
+#ia_report_pdf_export_modal {
+width: 640px !important;
+margin-left: -320px !important;
+}
+<?php $this->placeholder('styleVars')->captureEnd(); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css', 'screen'); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/datatables/media/js/jquery.dataTables.min.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js'); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/admin/pages/scripts/ia/main-table-managed.js'); ?>
+<?php $this->placeholder('jsvars')->captureStart(); ?>
+
+const GetAllIaReportsDataLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'getalliareports'), null, true) ?>';
+const DeleteIaReportLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'deleteiareport'), null, true) ?>';
+
+<?php $this->placeholder('jsvars')->captureEnd() ?>
+<?php $this->placeholder('jscalls')->captureStart(); ?>
+MainTableManaged.init();
+<?php $this->placeholder('jscalls')->captureEnd() ?>
+

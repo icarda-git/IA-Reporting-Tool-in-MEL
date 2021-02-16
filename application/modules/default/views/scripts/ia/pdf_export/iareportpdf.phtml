@@ -1,0 +1,1833 @@
+<?php
+if ($this->is_first_report) {
+    /**
+     * @param $_entity Model_IaReport | Model_IaReportCrp | Model_IaReportManagementDocuments | Model_IaReportPortfolioDocuments | Model_IaReportUpdates
+     * @param $_iaReport Model_IaReport
+     * @param $_showCenterFeedback bool
+     * @return mixed
+     */
+    function GetDiff($_entity, $_iaReport, $_showCenterFeedback)
+    {
+        if (!$_showCenterFeedback)
+            return $_entity;
+
+        $_entityWithDiff = clone $_entity;
+        $_entityDiff = $_iaReport->GetIaReportingDiff($_entity)['diff'];
+
+        if (is_a($_entity, 'Model_IaReport') && $_entity->supplementary_information != '' && (!isset($_entityDiff['supplementary_information']) || $_entityDiff['supplementary_information'] === 'There isn’t anything to compare.'))
+            $_entityDiff['supplementary_information'] = '<a href="' . APPLICATION_BASE_URL . '/uploads/ia_reports/' . $_entity->supplementary_information . '" download="' . substr($_entity->supplementary_information, 33) . '">' . substr($_entity->supplementary_information, 33) . '</a>';
+        if (is_a($_entity, 'Model_IaReportManagementDocuments') && $_entity->availability_status_document != '' && (!isset($_entityDiff['availability_status_document']) || $_entityDiff['availability_status_document'] === 'There isn’t anything to compare.'))
+            $_entityDiff['availability_status_document'] = '<a href="' . APPLICATION_BASE_URL . '/uploads/ia_reports/' . $_entity->availability_status_document . '" download="' . substr($_entity->availability_status_document, 33) . '">' . substr($_entity->availability_status_document, 33) . '</a>';
+
+        foreach ($_entityDiff as $_column => $_value)
+            if ($_value != '' && $_value != 'There isn’t anything to compare.')
+                try {
+                    $_entityWithDiff->$_column = $_value;
+                } catch (Exception $e) {
+                }
+        return $_entityWithDiff;
+    }
+
+    /**
+     * @param $_entity Model_IaReport | Model_IaReportCrp | Model_IaReportManagementDocuments | Model_IaReportPortfolioDocuments | Model_IaReportUpdates
+     * @param $_iaReport Model_IaReport
+     * @param $_showCenterFeedback bool
+     * @return string
+     */
+    function GetTableCellStyle($_entity, $_iaReport, $_showCenterFeedback)
+    {
+        if (!$_showCenterFeedback)
+            return '';
+
+        $_rowClass = '';
+        if ($_entity->is_deleted == '1')
+            $_rowClass = 'background-color: #e7505a75 !important;'; //Deleted Red
+        elseif ($_iaReport->IaReportingItemChanged($_entity))
+            $_rowClass = 'background-color: #5f73578f !important;'; //Modified Green
+        elseif ($_iaReport->IaReportingItemIsNew($_entity))
+            $_rowClass = 'background-color: #508fd075 !important;'; //Added Blue
+        return $_rowClass;
+    }
+
+    /**
+     * @param $_dataArray array
+     * @param $_iaReport Model_IaReport
+     * @param $_showCenterFeedback bool
+     * @return mixed
+     */
+    function GetAgreementsDiff($_dataArray, $_iaReport, $_showCenterFeedback)
+    {
+        if (!$_showCenterFeedback)
+            return $_dataArray;
+        $_agreementsDiffMappedColumns = array(
+            'agreement_related_portfolio' => 'agreement_related_portfolio_string',
+            'parties_name' => 'parties_name_string',
+            'country_id' => 'country',
+            'applicant_name' => 'applicant_name_string',
+            'is_agreement_related' => 'is_agreement_related_string',
+            'agreement_related_post' => 'agreement_related_post_string',
+            'restricted_agreement' => 'restricted_agreement_string',
+            'is_monetary_benefit' => 'is_monetary_benefit_string',
+            'is_ia_limitations' => 'is_ia_limitations_string'
+        );
+
+        foreach ($_dataArray as $_type => $_agreements) {
+            foreach ($_agreements as $_index => $_agreement) {
+                $_agreementEntity = new Model_IaReportAgreements();
+                foreach ($_agreementEntity->getFields() as $_column => $_columnType) {
+                    if (isset($_agreement[$_column]))
+                        $_agreementEntity->$_column = $_agreement[$_column];
+                }
+
+                $_agreementDiff = $_iaReport->GetIaReportingDiff($_agreementEntity)['diff'];
+
+                foreach ($_agreementDiff as $_column => $_value) {
+                    if ($_value === 'There isn’t anything to compare.')
+                        $_value = $_agreement[$_column];
+                    if (array_key_exists($_column, $_agreementsDiffMappedColumns)) {
+                        $_agreement[$_agreementsDiffMappedColumns[$_column]] = $_value;
+                    } else {
+                        $_agreement[$_column] = $_value;
+                    }
+                }
+
+                $_agreement['cell_style'] = '';
+                if ($_agreement['is_deleted'] == '1')
+                    $_agreement['cell_style'] = 'background-color: #e7505a75 !important;';
+                elseif ($_iaReport->IaReportingItemChanged($_agreementEntity))
+                    $_agreement['cell_style'] = 'background-color: #5f73578f !important;';
+                elseif ($_iaReport->IaReportingItemIsNew($_agreementEntity))
+                    $_agreement['cell_style'] = 'background-color: #508fd075 !important;';
+
+                $_dataArray[$_type][$_index] = $_agreement;
+            }
+        }
+        return $_dataArray;
+    }
+
+    /**
+     * @param $_dataArray array
+     * @param $_iaReport Model_IaReport
+     * @param $_showCenterFeedback bool
+     * @return mixed
+     */
+    function GetPublicDisclosuresDiff($_dataArray, $_iaReport, $_showCenterFeedback)
+    {
+        if (!$_showCenterFeedback)
+            return $_dataArray;
+
+        $_publicDisclosuresDiffMappedColumns = array(
+            'no_public_disclosure' => 'no_public_disclosure_string',
+            'is_public_disclosure_provided' => 'is_public_disclosure_provided_string',
+            'anticipated_public_disclosure' => 'anticipated_public_disclosure_string'
+        );
+
+        foreach ($_dataArray as $_index => $_publicDisclosure) {
+            $_publicDisclosureEntity = new Model_IaReportAgreementPublicDisclosure();
+            foreach ($_publicDisclosureEntity->getFields() as $_column => $_type) {
+                if (isset($_publicDisclosure[$_column]))
+                    $_publicDisclosureEntity->$_column = $_publicDisclosure[$_column];
+            }
+            $_publicDisclosureDiff = $_iaReport->GetIaReportingDiff($_publicDisclosureEntity)['diff'];
+
+            if ($_publicDisclosure['public_disclosure_document'] != '' && (!isset($_publicDisclosureDiff['public_disclosure_document']) || $_publicDisclosureDiff['public_disclosure_document'] === 'There isn’t anything to compare.'))
+                $_publicDisclosureDiff['public_disclosure_document'] = '<a href="' . APPLICATION_BASE_URL . '/uploads/ia_reports/' . $_publicDisclosure['public_disclosure_document'] . '" download="' . substr($_publicDisclosure['public_disclosure_document'], 33) . '">' . substr($_publicDisclosure['public_disclosure_document'], 33) . '</a>';
+            foreach ($_publicDisclosureDiff as $_column => $_value) {
+                if ($_value === 'There isn’t anything to compare.')
+                    $_value = $_publicDisclosure[$_column];
+                if (array_key_exists($_column, $_publicDisclosuresDiffMappedColumns)) {
+                    $_publicDisclosure[$_publicDisclosuresDiffMappedColumns[$_column]] = $_value;
+                } else {
+                    $_publicDisclosure[$_column] = $_value;
+                }
+            }
+
+            $_publicDisclosure['cell_style'] = '';
+            if ($_publicDisclosure['is_deleted'] == '1')
+                $_publicDisclosure['cell_style'] = 'background-color: #e7505a75 !important;';
+            elseif ($_iaReport->IaReportingItemChanged($_publicDisclosureEntity))
+                $_publicDisclosure['cell_style'] = 'background-color: #5f73578f !important;';
+            elseif ($_iaReport->IaReportingItemIsNew($_publicDisclosureEntity))
+                $_publicDisclosure['cell_style'] = 'background-color: #508fd075 !important;';
+
+            $_dataArray[$_index] = $_publicDisclosure;
+        }
+        return $_dataArray;
+    }
+
+    /**
+     * @param $_comments array
+     * @param $_formId string
+     * @param $_itemId int
+     * @param $_fieldName string
+     * @param $_title string
+     * @param false $_inlineComment bool
+     * @return string
+     */
+    function prepareEmbeddedComment($_comments, $_formId, $_itemId, $_fieldName, $_title, $_inlineComment = false)
+    {
+        //MPDF is not allowing (<, >, &, ' or ") so we cannot use <br> or &#10; for new lines
+        //00001010 is the binary for LF	(Line Feed)
+        $_newLine = chr(bindec('00001010'));
+        if (isset($_comments[$_formId][$_itemId][$_fieldName])) {
+            $_text = array();
+            foreach ($_comments[$_formId][$_itemId][$_fieldName] as $_comment)
+                $_text[] = $_comment['commented_by'] . ' (' . $_comment['modified_date'] . '): ' . $_newLine . $_comment['comment'];
+
+            return '<span class="' . ($_inlineComment ? 'comment_holder' : '') . '"><annotation title="' . $_title . '" ' . ($_inlineComment ? '' : 'pos-x="10"') . ' content="' . htmlspecialchars(implode($_newLine . '____________________' . $_newLine . $_newLine, $_text), ENT_QUOTES) . '" icon="Comment" color="black"/>' . ($_inlineComment ? 'AAA' : '') . '</span>';
+        }
+
+        return '';
+    }
+}
+
+$_iaReportWithDiff = GetDiff($this->ia_report, $this->ia_report, $this->show_center_feedback);
+$_comments = $this->comments;
+?>
+
+<section>
+    <!-- Page Content -->
+    <div class="container">
+
+        <div class="row">
+            <div class="col-lg-1 col-md-1"></div>
+            <div class="col-lg-10 col-md-10 col-sm-12 col-xs-12">
+                <?php if ($this->reporting_year != null) { ?>
+                    <?php if ($this->is_first_report) { ?>
+                        <section>
+                            <h1 class="text-center font-light">Center IA reporting <?= $this->reporting_year ?></h1>
+                            <hr>
+                            <p class="text-center font-12">
+                                </span><?= date("F j, Y H:i:s") ?></p>
+                            <hr>
+
+                            <h4 class="font-light">
+                                Color coding (for review)
+                                <tocentry content="Color coding (for review)"/>
+                            </h4>
+                            <ul class="font-14" style="list-style: none;">
+                                <li style="margin-bottom: 21px;">
+                                    <span style="color: red; text-decoration: line-through;">Deleted text</span>
+                                </li>
+                                <li style="margin-bottom: 21px;">
+                                    <span style="color: green;">Added text</span>
+                                </li>
+                                <li style="margin-bottom: 21px;">
+                                    <span style="color: #0a5ab2; font-weight: bold;">Review highlights</span>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11 color-coding-table">
+                                        <thead>
+                                        <tr>
+                                            <th class="table-cell">ID</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell" style="background-color: #5f73578f !important;">
+                                                Modified item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11 color-coding-table">
+                                        <thead>
+                                        <tr>
+                                            <th class="table-cell">ID</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell" style="background-color: #508fd075 !important;">
+                                                Added item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11 color-coding-table">
+                                        <thead>
+                                        <tr>
+                                            <th class="table-cell">ID</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell" style="background-color: #e7505a75 !important;">
+                                                Deleted item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11">
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell"
+                                                style="background-color: #5f73578f !important; width: 30%">
+                                                ID
+                                            </td>
+                                            <td class="table-cell" style="background-color: #5f73578f !important;">
+                                                Modified item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11">
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell"
+                                                style="background-color: #508fd075 !important; width: 30%">
+                                                ID
+                                            </td>
+                                            <td class="table-cell" style="background-color: #508fd075 !important;">
+                                                Added item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11">
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell"
+                                                style="background-color: #e7505a75 !important; width: 30%">
+                                                ID
+                                            </td>
+                                            <td class="table-cell" style="background-color: #e7505a75 !important;">
+                                                Deleted item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11">
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell"
+                                                style="background-color: #5f73578f !important; width: 30%">
+                                                Public Disclosure ID
+                                            </td>
+                                            <td class="table-cell" style="background-color: #5f73578f !important;">
+                                                Modified item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11">
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell"
+                                                style="background-color: #508fd075 !important; width: 30%">
+                                                Public Disclosure ID
+                                            </td>
+                                            <td class="table-cell" style="background-color: #508fd075 !important;">
+                                                Added item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <li>
+                                    <table class="table table-striped table-bordered table-hover font-11">
+                                        <tbody>
+                                        <tr>
+                                            <td class="table-cell"
+                                                style="background-color: #e7505a75 !important; width: 30%">
+                                                Public Disclosure ID
+                                            </td>
+                                            <td class="table-cell" style="background-color: #e7505a75 !important;">
+                                                Deleted item
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </li>
+                            </ul>
+                        </section>
+
+                        <tocpagebreak links="1"></tocpagebreak>
+                    <?php } ?>
+                <?php } ?>
+
+                <?php if (!$this->is_first_report) { ?>
+                    <pagebreak orientation="P"></pagebreak>
+                <?php } ?>
+                <!-- Title -->
+                <h1 class="text-center font-light"><?= $this->organization->abbreviation_or_name ?> IA Report
+                    <small> -
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'reporting_year', 'Reporting Year') ?>
+                        <?= $this->ia_report->reporting_year ?></small>
+                    <tocentry
+                            content="<?= htmlspecialchars('<span style="background-color: #d3e3d5">' . $this->organization->abbreviation_or_name . ' IA Report - ' . $this->ia_report->reporting_year . '</span>', ENT_QUOTES) ?>"/>
+                </h1>
+                <hr>
+                <!-- Date/Time -->
+                <p class="text-center font-12">
+                    <?= $this->ia_report->is_draft == '1' ? 'Drafted' : 'Submitted' ?>
+                    by <?= $this->ia_report->added_by_name ?>
+                    on: <?= date("F j, Y", strtotime($this->ia_report->added_date)) ?>
+                    <?php if ($this->ia_report->updated_date != null) { ?>
+                        <br>Last modified by: <?= $this->ia_report->updated_by_name ?>
+                        on: <?= date("F j, Y", strtotime($this->ia_report->updated_date)) ?>
+                    <?php } ?>
+                </p>
+                <hr>
+                <?php if ($this->reporting_year == null) { ?>
+
+                    <h4 class="font-light">
+                        Color coding (for review)
+                        <tocentry content="Color coding (for review)"/>
+                    </h4>
+                    <ul class="font-14" style="list-style: none;">
+                        <li style="margin-bottom: 21px;">
+                            <span style="color: red; text-decoration: line-through;">Deleted text</span>
+                        </li>
+                        <li style="margin-bottom: 21px;">
+                            <span style="color: green;">Added text</span>
+                        </li>
+                        <li style="margin-bottom: 21px;">
+                            <span style="color: #0a5ab2; font-weight: bold;">Review highlights</span>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11 color-coding-table">
+                                <thead>
+                                <tr>
+                                    <th class="table-cell">ID</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell" style="background-color: #5f73578f !important;">
+                                        Modified item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11 color-coding-table">
+                                <thead>
+                                <tr>
+                                    <th class="table-cell">ID</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell" style="background-color: #508fd075 !important;">
+                                        Added item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11 color-coding-table">
+                                <thead>
+                                <tr>
+                                    <th class="table-cell">ID</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell" style="background-color: #e7505a75 !important;">
+                                        Deleted item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11">
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell"
+                                        style="background-color: #5f73578f !important; width: 30%">
+                                        ID
+                                    </td>
+                                    <td class="table-cell" style="background-color: #5f73578f !important;">
+                                        Modified item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11">
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell"
+                                        style="background-color: #508fd075 !important; width: 30%">
+                                        ID
+                                    </td>
+                                    <td class="table-cell" style="background-color: #508fd075 !important;">
+                                        Added item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11">
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell"
+                                        style="background-color: #e7505a75 !important; width: 30%">
+                                        ID
+                                    </td>
+                                    <td class="table-cell" style="background-color: #e7505a75 !important;">
+                                        Deleted item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11">
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell"
+                                        style="background-color: #5f73578f !important; width: 30%">
+                                        Public Disclosure ID
+                                    </td>
+                                    <td class="table-cell" style="background-color: #5f73578f !important;">
+                                        Modified item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11">
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell"
+                                        style="background-color: #508fd075 !important; width: 30%">
+                                        Public Disclosure ID
+                                    </td>
+                                    <td class="table-cell" style="background-color: #508fd075 !important;">
+                                        Added item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <li>
+                            <table class="table table-striped table-bordered table-hover font-11">
+                                <tbody>
+                                <tr>
+                                    <td class="table-cell"
+                                        style="background-color: #e7505a75 !important; width: 30%">
+                                        Public Disclosure ID
+                                    </td>
+                                    <td class="table-cell" style="background-color: #e7505a75 !important;">
+                                        Deleted item
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                    </ul>
+
+                    <tocpagebreak links="1"></tocpagebreak>
+                <?php } else { ?>
+                    <pagebreak orientation="P"></pagebreak>
+                <?php } ?>
+
+                <?php if (in_array(1, $this->sections)) { ?>
+                    <!--SECTION 1-->
+                    <h4 class="font-light">
+                        SECTION 1: General Center Information
+                        <tocentry content="SECTION 1" level="1"/>
+                    </h4>
+                    <br>
+
+                    <?php if ($_iaReportWithDiff->supplementary_information != '' && $_iaReportWithDiff->supplementary_information != null) { ?>
+                        <h5 class="font-light diff_container">
+                            <tocentry content="Supplementary information" level="2"/>
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'supplementary_information', 'Supplementary information') ?>
+                            Supplementary information:<br>
+                            <?= trim($_iaReportWithDiff->supplementary_information) != '' ? html_entity_decode($_iaReportWithDiff->supplementary_information) : '' ?>
+                        </h5>
+                    <?php } ?>
+                    <br>
+
+                    <!--1.1-->
+                    <h5 class="font-light">
+                        <tocentry content="1.1. Center Point(s) of Contact" level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_report_contacts[]', '1.1. Center Point(s) of Contact') ?>
+                        1.1. Center Point(s) of Contact:
+                    </h5>
+                    <ul class="font-14">
+                        <?php foreach ($this->ia_report->ia_report_contacts as $_contact) { ?>
+                            <li><?= trim($_contact->user->name) ?></li>
+                        <?php } ?>
+                    </ul>
+                    <br>
+
+                    <!--1.2-->
+                    <h5 class="font-light">
+                        <tocentry content="1.2. Center capacity related to IA management" level="2"/>
+                        1.2. Center capacity related to IA management:
+                    </h5>
+                    <ul>
+                        <h6 class="font-light">
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_description', '1.2.a. Please provide a description of the capacity related to the management of Intellectual Assets at your Center and whether there has been a material change since the previous reporting cycle') ?>
+                            1.2.a. Please provide a description of the capacity related to the management of
+                            Intellectual
+                            Assets at your Center and whether there has been a material change since the previous
+                            reporting
+                            cycle
+                        </h6>
+                        <ul>
+                            <p class="text-center text-justify textarea-content font-14">
+                                <?= trim($_iaReportWithDiff->ia_description) != '' ? nl2br(trim($_iaReportWithDiff->ia_description)) : 'NA' ?>
+                            </p>
+                        </ul>
+                        <h6 class="font-light">
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_related_activities', '1.2.b. Please list the training, workshops, capacity building, or other activities related to the management of Intellectual Assets at your Center, in which your staff delivered or participated during the reporting cycle') ?>
+                            1.2.b. Please list the training, workshops, capacity building, or other activities related
+                            to
+                            the management of Intellectual Assets at your Center, in which your staff delivered or
+                            participated during the reporting cycle
+                        </h6>
+                        <ul>
+                            <p class="text-center text-justify textarea-content font-14">
+                                <?= trim($_iaReportWithDiff->ia_related_activities) != '' ? nl2br(trim($_iaReportWithDiff->ia_related_activities)) : 'NA' ?>
+                            </p>
+                        </ul>
+                        <h6 class="font-light">
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_capacity', '1.2.c. Please confirm whether your Center considers its capacity related to the management of Intellectual Assets to be sufficient for its needs during the reporting cycle') ?>
+                            1.2.c. Please confirm whether your Center considers its capacity related to the management
+                            of
+                            Intellectual Assets to be sufficient for its needs during the reporting cycle
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_capacity_explain', 'Explanation') ?>
+                        </h6>
+                        <ul>
+                            <p class="text-center text-justify textarea-content font-14">
+                                <?php if ($this->ia_report->ia_capacity == '0') { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_capacity) ? 'No' : $_iaReportWithDiff->ia_capacity ?>, Explanation:
+                                    <?= trim($_iaReportWithDiff->ia_capacity_explain) != '' ? nl2br(trim($_iaReportWithDiff->ia_capacity_explain)) : 'NA' ?>
+                                <?php } else { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_capacity) ? 'Yes' : $_iaReportWithDiff->ia_capacity ?>
+                                <?php } ?>
+                            </p>
+                        </ul>
+                    </ul>
+
+                    <pagebreak orientation="L"></pagebreak>
+                    <!--1.3-->
+                    <h5 class="font-light">
+                        <tocentry content="1.3. CRP/Platform capacity related to IA management" level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_crp_general', '1.3. CRP/Platform capacity related to IA management') ?>
+                        1.3. CRP/Platform capacity related to IA management:
+                    </h5>
+                    <?php $_crps = $this->ia_report->_getCrps(false); ?>
+                    <table class="table table-striped table-bordered table-hover font-11">
+                        <thead>
+                        <tr>
+                            <th class="table-cell">ID</th>
+                            <th class="table-cell">1st year<br>reported</th>
+                            <th class="table-cell">Latest year<br>reported</th>
+                            <th class="table-cell">1.3.a. CRP/Platform</th>
+                            <th class="table-cell">1.3.b. Capacity and staffing</th>
+                            <th class="table-cell">1.3.c. Governance and oversight</th>
+                            <th class="table-cell">1.3.d. Policies/guidelines/tools/templates related to IA management
+                            </th>
+                            <th class="table-cell">1.3.e. Committees, focal points, communities of practice, annual
+                                meetings, workshops
+                            </th>
+                            <th class="table-cell">Updates/comments</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($_crps as $_crp) {
+                            $_crpWithDiff = GetDiff($_crp, $this->ia_report, $this->show_center_feedback);
+                            $_cellStyle = GetTableCellStyle($_crp, $this->ia_report, $this->show_center_feedback);
+                            $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_crp, $this->ia_report, $this->show_center_feedback);
+                                ?>
+                                <tr>
+                                    <td class="table-cell" style="<?= $_cellStyle ?>">
+                                        <?= prepareEmbeddedComment($_comments, 'ia_report_crp_form', $_crp->ia_report_crp_id, 'ia_crp_general_item', '') ?>
+                                        <?= $_updatedRecordInfo['display_id'] ?>
+                                    </td>
+                                    <td class="table-cell"><?= $_updatedRecordInfo['first_reporting_year'] ?></td>
+                                    <td class="table-cell"><?= $_updatedRecordInfo['last_reporting_year'] ?></td>
+                                    <td class="table-cell"><?= is_numeric($_crpWithDiff->crp_id) ? trim($_crp->crp->full_name) : $_crpWithDiff->crp_id ?></td>
+                                    <td class="textarea-content table-cell">
+                                        <?= trim($_crpWithDiff->ia_crp_management_capacity) != '' ? nl2br(trim($_crpWithDiff->ia_crp_management_capacity)) : 'NA' ?>
+                                    </td>
+                                    <td class="textarea-content table-cell">
+                                        <?= trim($_crpWithDiff->ia_crp_management_oversight) != '' ? nl2br(trim($_crpWithDiff->ia_crp_management_oversight)) : 'NA' ?>
+                                    </td>
+                                    <td class="textarea-content table-cell">
+                                        <?= trim($_crpWithDiff->ia_crp_management_policies) != '' ? nl2br(trim($_crpWithDiff->ia_crp_management_policies)) : 'NA' ?>
+                                    </td>
+                                    <td class="textarea-content table-cell">
+                                        <?= trim($_crpWithDiff->ia_crp_management_committees) != '' ? nl2br(trim($_crpWithDiff->ia_crp_management_committees)) : 'NA' ?>
+                                    </td>
+                                    <td class="textarea-content table-cell">
+                                        <?= $_updatedRecordInfo['updates'] ?>
+                                        </td>
+                                </tr>
+                            <?php } ?>
+                    </table>
+
+                    <pagebreak orientation="L"></pagebreak>
+                    <!--1.4-->
+                    <h5 class="font-light">
+                        <tocentry content="1.4. Center policies and other resources related to IA Management"
+                                  level="2"/>
+                        1.4. Center policies and other resources related to IA Management:
+                    </h5>
+
+                    <h6 class="font-light">
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_management_documents_general', '1.4.a. Please review below the IA management related official policies related to Intellectual Assets management which have been communicated to the System Organization.. Please ‘add’ or ‘update’ to reflect any changes during the reporting cycle') ?>
+                        1.4.a. Please review below the IA management related official policies related to
+                        Intellectual
+                        Assets management which have been communicated to the System Organization.. Please ‘add’ or
+                        ‘update’ to reflect any changes during the reporting cycle
+                    </h6>
+                    <?php $_policies = $this->ia_report->_getPolicies(false); ?>
+                    <table class="table table-striped table-bordered table-hover font-11">
+                        <thead>
+                        <tr>
+                            <th class="table-cell">ID</th>
+                            <th class="table-cell">1st year<br>reported</th>
+                            <th class="table-cell">Latest year<br>reported</th>
+                            <th class="table-cell">Name of official Policy</th>
+                            <th class="table-cell">Category</th>
+                            <th class="table-cell">Status</th>
+                            <th class="table-cell">Date of Approval</th>
+                            <th class="table-cell">Effective Date</th>
+                            <th class="table-cell">CRP/Platform Specific</th>
+                            <th class="table-cell">Publicly Available</th>
+                            <th class="table-cell">Availability within CGIAR</th>
+                            <th class="table-cell">Updates/comments</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($_policies as $_policy) {
+                            $_policyWithDiff = GetDiff($_policy, $this->ia_report, $this->show_center_feedback);
+                            $_cellStyle = GetTableCellStyle($_policy, $this->ia_report, $this->show_center_feedback);
+                            $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_policy, $this->ia_report, $this->show_center_feedback);
+
+                            try {
+                                $_crpIds = Zend_Json::decode($_policyWithDiff->crp_id);
+                            } catch (Exception $e) {
+                                $_crpIds = null;
+                            }
+                                ?>
+                                <tr>
+                                    <td class="table-cell" style="<?= $_cellStyle ?>">
+                                    <?= prepareEmbeddedComment($_comments, 'ia_management_document_form', $_policy->ia_management_document_id, 'ia_management_documents_general_item', '') ?>
+                                    <?= $_updatedRecordInfo['display_id'] ?>
+                                    </td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['first_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['last_reporting_year'] ?></td>
+                                    <td class="table-cell"><?= trim($_policyWithDiff->policy_title) ?></td>
+                                    <td class="table-cell">
+                                        <?= trim($_policyWithDiff->category) != '' ? trim($_policyWithDiff->category) : 'NA' ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?= trim($_policyWithDiff->manage_status) != '' ? trim($_policyWithDiff->manage_status) : 'NA' ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if (strpos($_policyWithDiff->approval_date, '<span') !== false) { ?>
+                                            <?= $_policyWithDiff->approval_date ?>
+                                        <?php } else { ?>
+                                            <?= strtotime($_policy->approval_date) > 0 ? $_policy->approval_date : 'NA' ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if (strpos($_policyWithDiff->effective_date, '<span') !== false) { ?>
+                                            <?= $_policyWithDiff->effective_date ?>
+                                        <?php } else { ?>
+                                            <?= strtotime($_policy->effective_date) > 0 ? $_policy->effective_date : 'NA' ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if ($_policy->is_crp_related == '1') { ?>
+                                            <?= !is_array($_crpIds) ? $_policyWithDiff->crp_id : '- ' . implode('<br>- ', array_column($_policy->crps->toArray(), 'full_name')) ?>
+                                        <?php } else { ?>
+                                            <?= is_numeric($_policyWithDiff->is_crp_related) ? 'No' : $_policyWithDiff->is_crp_related ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if (is_numeric($_policyWithDiff->is_publicly_available)) { ?>
+                                            <?php if ($_policy->is_publicly_available == '1') { ?>
+                                                Yes
+                                            <?php } else { ?>
+                                                No
+                                            <?php } ?>
+                                        <?php } else { ?>
+                                            <?= $_policyWithDiff->is_publicly_available ?>
+                                        <?php } ?>
+
+                                    <?= trim($_policy->public_url) != '' ? html_entity_decode($_policy->public_url) : ''?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?= $_policyWithDiff->availability_status ?>
+                                            <br>
+                                    <?= trim($_policyWithDiff->availability_status_document) != '' ? html_entity_decode($_policyWithDiff->availability_status_document) : ''?>
+                                        </td>
+                                        <td class="textarea-content table-cell">
+                                    <?= $_updatedRecordInfo['updates'] ?>
+                                        </td>
+                                </tr>
+                            <?php } ?>
+                    </table>
+
+                    <h6 class="font-light">
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_management_other_documents_general', '1.4.b. Please review below the other resources related to Intellectual Assets management (e.g.: Directives, Implementation Guidelines, Explanatory Notes, Templates, Tools, etc.) which have been communicated to the SO. Please ‘add’ or ‘update’ to reflect any changes during the reporting cycle') ?>
+                        1.4.b. Please review below the other resources related to Intellectual Assets management
+                        (e.g.:
+                        Directives, Implementation Guidelines, Explanatory Notes, Templates, Tools, etc.) which have
+                        been communicated to the SO. Please ‘add’ or ‘update’ to reflect any changes during the
+                        reporting cycle
+                    </h6>
+                    <?php $_managementDocuments = $this->ia_report->_getOtherManagementDocuments(false); ?>
+                    <table class="table table-striped table-bordered table-hover font-11">
+                        <thead>
+                        <tr>
+                            <th class="table-cell">ID</th>
+                            <th class="table-cell">1st year<br>reported</th>
+                            <th class="table-cell">Latest year<br>reported</th>
+                            <th class="table-cell">Other IA management related documents</th>
+                            <th class="table-cell">Name of resource</th>
+                            <th class="table-cell">Category</th>
+                            <th class="table-cell">Status</th>
+                            <th class="table-cell">Date of Approval</th>
+                            <th class="table-cell">Effective Date</th>
+                            <th class="table-cell">CRP/Platform Specific</th>
+                            <th class="table-cell">Publicly Available</th>
+                            <th class="table-cell">Availability within CGIAR</th>
+                            <th class="table-cell">Updates/comments</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($_managementDocuments as $_managementDocument) {
+                            $_managementDocumentWithDiff = GetDiff($_managementDocument, $this->ia_report, $this->show_center_feedback);
+                            $_cellStyle = GetTableCellStyle($_managementDocument, $this->ia_report, $this->show_center_feedback);
+                            $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_managementDocument, $this->ia_report, $this->show_center_feedback);
+
+                            try {
+                                $_crpIds = Zend_Json::decode($_managementDocumentWithDiff->crp_id);
+                            } catch (Exception $e) {
+                                $_crpIds = null;
+                            }
+                                ?>
+                                <tr>
+                                    <td class="table-cell" style="<?= $_cellStyle ?>">
+                                    <?= prepareEmbeddedComment($_comments, 'ia_management_document_form', $_managementDocument->ia_management_document_id, 'ia_management_documents_general_item', '') ?>
+                                    <?= $_updatedRecordInfo['display_id'] ?>
+                                    </td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['first_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['last_reporting_year'] ?></td>
+                                    <td class="table-cell"><?= $_managementDocument->other_document_type ?></td>
+                                    <td class="table-cell"><?= trim($_managementDocument->policy_title) ?></td>
+                                    <td class="table-cell">
+                                        <?= trim($_managementDocumentWithDiff->category) != '' ? trim($_managementDocumentWithDiff->category) : 'NA' ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?= trim($_managementDocumentWithDiff->manage_status) != '' ? trim($_managementDocumentWithDiff->manage_status) : 'NA' ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if (strpos($_managementDocumentWithDiff->approval_date, '<span') !== false) { ?>
+                                            <?= $_managementDocumentWithDiff->approval_date ?>
+                                        <?php } else { ?>
+                                            <?= strtotime($_managementDocument->approval_date) > 0 ? $_managementDocument->approval_date : 'NA' ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if (strpos($_managementDocumentWithDiff->effective_date, '<span') !== false) { ?>
+                                            <?= $_managementDocumentWithDiff->effective_date ?>
+                                        <?php } else { ?>
+                                            <?= strtotime($_managementDocument->effective_date) > 0 ? $_managementDocument->effective_date : 'NA' ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if ($_managementDocument->is_crp_related == '1') { ?>
+                                            <?= !is_array($_crpIds) ? $_managementDocumentWithDiff->crp_id : '- ' . implode('<br>- ', array_column($_managementDocument->crps->toArray(), 'full_name')) ?>
+                                        <?php } else { ?>
+                                            <?= is_numeric($_managementDocumentWithDiff->is_crp_related) ? 'No' : $_managementDocumentWithDiff->is_crp_related ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?php if (is_numeric($_managementDocumentWithDiff->is_publicly_available)) { ?>
+                                            <?php if ($_managementDocument->is_publicly_available == '1') { ?>
+                                                Yes
+                                            <?php } else { ?>
+                                                No
+                                            <?php } ?>
+                                        <?php } else { ?>
+                                            <?= $_managementDocumentWithDiff->is_publicly_available ?>
+                                        <?php } ?>
+
+                                    <?= trim($_managementDocument->public_url) != '' ? html_entity_decode($_managementDocument->public_url) : '' ?>
+                                    </td>
+                                    <td class="table-cell">
+                                        <?= $_managementDocumentWithDiff->availability_status ?>
+                                            <br>
+                                    <?= trim($_managementDocumentWithDiff->availability_status_document) != '' ? html_entity_decode($_managementDocumentWithDiff->availability_status_document) : '' ?>
+                                        </td>
+                                        <td class="textarea-content table-cell">
+                                    <?= $_updatedRecordInfo['updates'] ?>
+                                        </td>
+                                </tr>
+                            <?php } ?>
+                    </table>
+
+                    <pagebreak orientation="L"></pagebreak>
+                    <!--1.5-->
+                    <h5 class="font-light">
+                        <tocentry content="1.5. Center IA Portfolio of registered IP" level="2"/>
+                        1.5. Center IA Portfolio of registered IP:
+                    </h5>
+                    <h6 class="font-light">
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_patents_general', '1.5.a. Patents') ?>
+                        1.5.a. Patents
+                    </h6>
+                    <?php $_patents = $this->ia_report->_getPatents(false); ?>
+                    <table class="table table-striped table-bordered table-hover font-11">
+                        <thead>
+                        <tr>
+                            <th class="table-cell">ID</th>
+                            <th class="table-cell">1st year<br>reported</th>
+                            <th class="table-cell">Latest year<br>reported</th>
+                            <th class="table-cell">Active status</th>
+                            <th class="table-cell">CRP/Platform Specific</th>
+                            <th class="table-cell">Applicant(s) / Owner(s)</th>
+                            <th class="table-cell">Patent Title</th>
+                            <th class="table-cell">Patent Short Title</th>
+                            <th class="table-cell">Type of Filing</th>
+                            <th class="table-cell">Filing scope</th>
+                            <th class="table-cell">Country(ies) / Status</th>
+                            <th class="table-cell">Link to IP office record</th>
+                            <th class="table-cell">Year of Filing</th>
+                            <th class="table-cell">Claims category(ies)</th>
+                            <th class="table-cell">Invention summary</th>
+                            <th class="table-cell">Summary of claims</th>
+                            <th class="table-cell">Associated Sect. 3.2 public disclosure link(s)</th>
+                            <th class="table-cell">Associated Section 3.1 arrangement(s)</th>
+                            <th class="table-cell">Updates/comments</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($_patents as $_patent) {
+                            $_patentWithDiff = GetDiff($_patent, $this->ia_report, $this->show_center_feedback);
+                            $_cellStyle = GetTableCellStyle($_patent, $this->ia_report, $this->show_center_feedback);
+                            $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_patent, $this->ia_report, $this->show_center_feedback);
+
+                            $_latestPublicDisclosure = $_patent->latest_public_disclosure;
+                            if ($_latestPublicDisclosure->ia_agreement_public_disclosure_id == null)
+                                $_publicDisclosure = 'NA';
+                            elseif ($_latestPublicDisclosure->public_disclosure_link != null)
+                                $_publicDisclosure = $_latestPublicDisclosure->public_disclosure_link;
+                            elseif ($_latestPublicDisclosure->public_disclosure_link != null)
+                                $_publicDisclosure = APPLICATION_BASE_URL . '/uploads/ia_reports/' . $_latestPublicDisclosure->public_disclosure_document;
+                            else
+                                $_publicDisclosure = 'No public disclosure issued';
+
+                            $_latestAgreement = $_patent->latest_agreement;
+                            $_agreement = $_latestAgreement->ia_agreement_id != null ? $_latestAgreement->unique_identifier : null;
+
+                            try {
+                                $_crpIds = Zend_Json::decode($_patentWithDiff->crp_id);
+                            } catch (Exception $e) {
+                                $_crpIds = null;
+                            }
+                            try {
+                                $_owners = Zend_Json::decode($_patentWithDiff->owner_applicant);
+                            } catch (Exception $e) {
+                                $_owners = null;
+                            }
+
+                            if ($_patentWithDiff->country_id == '') {
+                                $_countriesData = $_patent->countries_data;
+                                $_countries = array();
+                                foreach ($_countriesData as $_countryData)
+                                    $_countries[] = $_countryData->country->name . ' (' . $_countryData->status . ' - ' . $_countryData->reporting_year . ')';
+                                $_patentWithDiff->country_id = implode('; ', $_countries);
+                            }
+                            ?>
+                            <tr>
+                                <td class="table-cell" style="<?= $_cellStyle ?>">
+                                    <?= prepareEmbeddedComment($_comments, 'ia_portfolio_document_form', $_patent->ia_portfolio_document_id, 'ia_portfolio_general_item', '') ?>
+                                    <?= $_updatedRecordInfo['display_id'] ?>
+                                </td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['first_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['last_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_patent->active_status ?></td>
+                                <td class="table-cell">
+                                    <?php if ($_patent->is_crp_related == '1') { ?>
+                                        <?= !is_array($_crpIds) ? $_patentWithDiff->crp_id : '- ' . implode('<br>- ', array_column($_patent->crps->toArray(), 'full_name')) ?>
+                                    <?php } else { ?>
+                                        <?= is_numeric($_patentWithDiff->is_crp_related) ? 'No' : $_patentWithDiff->is_crp_related ?>
+                                    <?php } ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= !is_array($_owners) ? $_patentWithDiff->owner_applicant : '- ' . implode('<br>- ', array_column($_patent->owners->toArray(), 'full_name')) ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_patentWithDiff->portfolio_title != '' ? $_patentWithDiff->portfolio_title : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_patentWithDiff->short_title != '' ? $_patentWithDiff->short_title : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_patentWithDiff->filing_type_1 != '' ? $_patentWithDiff->filing_type_1 : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_patentWithDiff->filing_type_2 != '' ? $_patentWithDiff->filing_type_2 : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_patentWithDiff->country_id ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= trim($_patentWithDiff->external_link) != '' ? html_entity_decode($_patentWithDiff->external_link) : '' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?php if (strpos($_patentWithDiff->filing_date, '<span') !== false) { ?>
+                                        <?= $_patentWithDiff->filing_date ?>
+                                    <?php } else { ?>
+                                        <?= strtotime($_patent->filing_date) > 0 ? $_patent->filing_date : 'NA' ?>
+                                    <?php } ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_patentWithDiff->claims_categories != '' ? $_patentWithDiff->claims_categories : 'NA' ?>
+                                </td>
+                                <td class="table-cell textarea-content">
+                                    <?= trim($_patentWithDiff->innovation_summary) != '' ? nl2br(trim($_patentWithDiff->innovation_summary)) : 'NA' ?>
+                                </td>
+                                <td class="table-cell textarea-content">
+                                    <?= trim($_patentWithDiff->claims_summary) != '' ? nl2br(trim($_patentWithDiff->claims_summary)) : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_publicDisclosure != '' ? $_publicDisclosure : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_agreement != '' ? $_agreement : 'NA' ?>
+                                </td>
+                                <td class="textarea-content table-cell">
+                                    <?= $_updatedRecordInfo['updates'] ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+
+                    <h6 class="font-light">
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_pvps_general', '1.5.b. PVPs (plant variety protection)') ?>
+                        1.5.b. PVPs (plant variety protection)
+                    </h6>
+                    <?php $_pvps = $this->ia_report->_getPvps(false); ?>
+                    <table class="table table-striped table-bordered table-hover font-11">
+                        <thead>
+                        <tr>
+                            <th class="table-cell">ID</th>
+                            <th class="table-cell">1st year<br>reported</th>
+                            <th class="table-cell">Latest year<br>reported</th>
+                            <th class="table-cell">Active status</th>
+                            <th class="table-cell">CRP/Platform Specific</th>
+                            <th class="table-cell">Applicant(s) / Owner(s)</th>
+                            <th class="table-cell">Variety Title</th>
+                            <th class="table-cell">Variety Short Title</th>
+                            <th class="table-cell">Crop(s)</th>
+                            <th class="table-cell">Filing scope</th>
+                            <th class="table-cell">Country(ies) / Status</th>
+                            <th class="table-cell">Link to IP office record</th>
+                            <th class="table-cell">Year of Filing</th>
+                            <th class="table-cell">Variety summary</th>
+                            <th class="table-cell">Summary of claims</th>
+                            <th class="table-cell">Associated Sect. 3.2 public disclosure link(s)</th>
+                            <th class="table-cell">Associated Section 3.1 arrangement(s)</th>
+                            <th class="table-cell">Updates/comments</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($_pvps as $_pvp) {
+                            $_pvpWithDiff = GetDiff($_pvp, $this->ia_report, $this->show_center_feedback);
+                            $_cellStyle = GetTableCellStyle($_pvp, $this->ia_report, $this->show_center_feedback);
+                            $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_pvp, $this->ia_report, $this->show_center_feedback);
+
+                            $_latestPublicDisclosure = $_pvp->latest_public_disclosure;
+                            if ($_latestPublicDisclosure->ia_agreement_public_disclosure_id == null)
+                                $_publicDisclosure = 'NA';
+                            elseif ($_latestPublicDisclosure->public_disclosure_link != null)
+                                $_publicDisclosure = $_latestPublicDisclosure->public_disclosure_link;
+                            elseif ($_latestPublicDisclosure->public_disclosure_link != null)
+                                $_publicDisclosure = APPLICATION_BASE_URL . '/uploads/ia_reports/' . $_latestPublicDisclosure->public_disclosure_document;
+                            else
+                                $_publicDisclosure = 'No public disclosure issued';
+
+                            $_latestAgreement = $_pvp->latest_agreement;
+                            $_agreement = $_latestAgreement->ia_agreement_id != null ? $_latestAgreement->unique_identifier : null;
+
+                            try {
+                                $_crpIds = Zend_Json::decode($_pvpWithDiff->crp_id);
+                            } catch (Exception $e) {
+                                $_crpIds = null;
+                            }
+                            try {
+                                $_owners = Zend_Json::decode($_pvpWithDiff->owner_applicant);
+                            } catch (Exception $e) {
+                                $_owners = null;
+                            }
+                            try {
+                                $_crops = Zend_Json::decode($_pvpWithDiff->crop_id);
+                            } catch (Exception $e) {
+                                $_crops = null;
+                            }
+
+                            if ($_pvpWithDiff->country_id == '') {
+                                $_countriesData = $_pvp->countries_data;
+                                $_countries = array();
+                                foreach ($_countriesData as $_countryData)
+                                    $_countries[] = $_countryData->country->name . ' (' . $_countryData->status . ' - ' . $_countryData->reporting_year . ')';
+                                $_pvpWithDiff->country_id = implode('; ', $_countries);
+                            }
+                            ?>
+                            <tr>
+                                <td class="table-cell" style="<?= $_cellStyle ?>">
+                                    <?= prepareEmbeddedComment($_comments, 'ia_portfolio_document_form', $_pvp->ia_portfolio_document_id, 'ia_portfolio_general_item', '') ?>
+                                    <?= $_updatedRecordInfo['display_id'] ?>
+                                </td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['first_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['last_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_pvp->active_status ?></td>
+                                <td class="table-cell">
+                                    <?php if ($_pvp->is_crp_related == '1') { ?>
+                                        <?= !is_array($_crpIds) ? $_pvpWithDiff->crp_id : '- ' . implode('<br>- ', array_column($_pvp->crps->toArray(), 'full_name')) ?>
+                                    <?php } else { ?>
+                                        <?= is_numeric($_pvpWithDiff->is_crp_related) ? 'No' : $_pvpWithDiff->is_crp_related ?>
+                                    <?php } ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= !is_array($_owners) ? $_pvpWithDiff->owner_applicant : '- ' . implode('<br>- ', array_column($_pvp->owners->toArray(), 'full_name')) ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_pvpWithDiff->portfolio_title != '' ? $_pvpWithDiff->portfolio_title : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_pvpWithDiff->short_title != '' ? $_pvpWithDiff->short_title : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= !is_array($_crops) ? $_pvpWithDiff->crop_id : '- ' . implode('<br>- ', array_column($_pvp->crops->toArray(), 'crop_name')) ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_pvpWithDiff->filing_type_2 != '' ? $_pvpWithDiff->filing_type_2 : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_pvpWithDiff->country_id ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= trim($_pvpWithDiff->external_link) != '' ? html_entity_decode($_pvpWithDiff->external_link) : '' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?php if (strpos($_pvpWithDiff->filing_date, '<span') !== false) { ?>
+                                        <?= $_pvpWithDiff->filing_date ?>
+                                    <?php } else { ?>
+                                        <?= strtotime($_pvp->filing_date) > 0 ? $_pvp->filing_date : 'NA' ?>
+                                    <?php } ?>
+                                </td>
+                                <td class="table-cell textarea-content">
+                                    <?= trim($_pvpWithDiff->innovation_summary) != '' ? nl2br(trim($_pvpWithDiff->innovation_summary)) : 'NA' ?>
+                                </td>
+                                <td class="table-cell textarea-content">
+                                    <?= trim($_pvpWithDiff->claims_summary) != '' ? nl2br(trim($_pvpWithDiff->claims_summary)) : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_publicDisclosure != '' ? $_publicDisclosure : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_agreement != '' ? $_agreement : 'NA' ?>
+                                </td>
+                                <td class="textarea-content table-cell">
+                                    <?= $_updatedRecordInfo['updates'] ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+
+                    <h6 class="font-light">
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_trademarks_general', '1.5.c. Trademarks') ?>
+                        1.5.c. Trademarks
+                    </h6>
+                    <?php $_trademarks = $this->ia_report->_getTrademarks(false); ?>
+                    <table class="table table-striped table-bordered table-hover font-11">
+                        <thead>
+                        <tr>
+                            <th class="table-cell">ID</th>
+                            <th class="table-cell">1st year<br>reported</th>
+                            <th class="table-cell">Latest year<br>reported</th>
+                            <th class="table-cell">Active status</th>
+                            <th class="table-cell">CRP/Platform Specific</th>
+                            <th class="table-cell">Applicant(s) / Owner(s)</th>
+                            <th class="table-cell">TradeMark Type</th>
+                            <th class="table-cell">Filing scope</th>
+                            <th class="table-cell">Country(ies) / Status</th>
+                            <th class="table-cell">Link to IP office record</th>
+                            <th class="table-cell">Subject/Description of trademark</th>
+                            <th class="table-cell">Year of Filing</th>
+                            <th class="table-cell">Product and service classes</th>
+                            <th class="table-cell">Brief summary of claims (Products and services)</th>
+                            <th class="table-cell">Updates/comments</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($_trademarks as $_trademark) {
+                            $_trademarkWithDiff = GetDiff($_trademark, $this->ia_report, $this->show_center_feedback);
+                            $_cellStyle = GetTableCellStyle($_trademark, $this->ia_report, $this->show_center_feedback);
+                            $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_trademark, $this->ia_report, $this->show_center_feedback);
+
+                            try {
+                                $_crpIds = Zend_Json::decode($_trademarkWithDiff->crp_id);
+                            } catch (Exception $e) {
+                                $_crpIds = null;
+                            }
+                            try {
+                                $_owners = Zend_Json::decode($_trademarkWithDiff->owner_applicant);
+                            } catch (Exception $e) {
+                                $_owners = null;
+                            }
+
+                            if ($_trademarkWithDiff->country_id == '') {
+                                $_countriesData = $_trademark->countries_data;
+                                $_countries = array();
+                                foreach ($_countriesData as $_countryData)
+                                    $_countries[] = $_countryData->country->name . ' (' . $_countryData->status . ' - ' . $_countryData->reporting_year . ')';
+                                $_trademarkWithDiff->country_id = implode('; ', $_countries);
+                            }
+                            ?>
+                            <tr>
+                                <td class="table-cell" style="<?= $_cellStyle ?>">
+                                    <?= prepareEmbeddedComment($_comments, 'ia_portfolio_document_form', $_trademark->ia_portfolio_document_id, 'ia_portfolio_general_item', '') ?>
+                                    <?= $_updatedRecordInfo['display_id'] ?>
+                                </td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['first_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_updatedRecordInfo['last_reporting_year'] ?></td>
+                                <td class="table-cell"><?= $_trademark->active_status ?></td>
+                                <td class="table-cell">
+                                    <?php if ($_trademark->is_crp_related == '1') { ?>
+                                        <?= !is_array($_crpIds) ? $_trademarkWithDiff->crp_id : '- ' . implode('<br>- ', array_column($_trademark->crps->toArray(), 'full_name')) ?>
+                                    <?php } else { ?>
+                                        <?= is_numeric($_trademarkWithDiff->is_crp_related) ? 'No' : $_trademarkWithDiff->is_crp_related ?>
+                                    <?php } ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= !is_array($_owners) ? $_trademarkWithDiff->owner_applicant : '- ' . implode('<br>- ', array_column($_trademark->owners->toArray(), 'full_name')) ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_trademarkWithDiff->trademark_type != '' ? $_trademarkWithDiff->trademark_type : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_trademarkWithDiff->filing_type_2 != '' ? $_trademarkWithDiff->filing_type_2 : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_trademarkWithDiff->country_id ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= trim($_trademarkWithDiff->external_link) != '' ? html_entity_decode($_trademarkWithDiff->external_link) : '' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_trademarkWithDiff->portfolio_title != '' ? $_trademarkWithDiff->portfolio_title : 'NA' ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?php if (strpos($_trademarkWithDiff->filing_date, '<span') !== false) { ?>
+                                        <?= $_trademarkWithDiff->filing_date ?>
+                                    <?php } else { ?>
+                                        <?= strtotime($_trademark->filing_date) > 0 ? $_trademark->filing_date : 'NA' ?>
+                                    <?php } ?>
+                                </td>
+                                <td class="table-cell">
+                                    <?= $_trademark->claims_categories != '' ? $_trademark->claims_categories : 'NA' ?>
+                                </td>
+                                <td class="table-cell textarea-content">
+                                    <?= trim($_trademark->claims_summary) != '' ? nl2br(trim($_trademark->claims_summary)) : 'NA' ?>
+                                </td>
+                                <td class="textarea-content table-cell">
+                                    <?= $_updatedRecordInfo['updates'] ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+                <?php } ?>
+
+                    <pagebreak orientation="P"></pagebreak>
+                    <!--1.6-->
+                    <h5 class="font-light">
+                        <tocentry
+                                content="1.6. Please describe key new or ongoing partnerships, arrangements, or collaborations that were impactful (eg: new or ongoing partnerships, arrangements, or collaborations that supported the conservation and widespread use of all genetic resources for food and agriculture or that otherwise furthered the CGIAR Vision) during the reporting cycle"
+                                level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_partnerships', '1.6. Please describe key new or ongoing partnerships, arrangements, or collaborations that were impactful (eg: new or ongoing partnerships, arrangements, or collaborations that supported the conservation and widespread use of all genetic resources for food and agriculture or that otherwise furthered the CGIAR Vision) during the reporting cycle') ?>
+                        1.6. Please describe key new or ongoing partnerships, arrangements, or collaborations that were
+                        impactful (eg: new or ongoing partnerships, arrangements, or collaborations that supported the
+                        conservation and widespread use of all genetic resources for food and agriculture or that
+                        otherwise
+                        furthered the CGIAR Vision) during the reporting cycle:
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?= trim($_iaReportWithDiff->ia_partnerships) != '' ? nl2br(trim($_iaReportWithDiff->ia_partnerships)) : 'NA' ?>
+                        </p>
+                    </ul>
+                    <br>
+
+                    <!--1.7-->
+                    <h5 class="font-light">
+                        <tocentry
+                                content="1.7. Please describe the Center’s approach(es) to maximizing the global accessibility and impact of its Intellectual Assets"
+                                level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_management_approach', '1.7. Please describe the Center’s approach(es) to maximizing the global accessibility and impact of its Intellectual Assets') ?>
+                        1.7. Please describe the Center’s approach(es) to maximizing the global accessibility and impact
+                        of
+                        its Intellectual Assets:
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?= trim($_iaReportWithDiff->ia_management_approach) != '' ? nl2br(trim($_iaReportWithDiff->ia_management_approach)) : 'NA' ?>
+                        </p>
+                    </ul>
+                    <br>
+
+                    <!--1.8-->
+                    <h5 class="font-light">
+                        <tocentry
+                                content="1.8. Please provide any relevant highlights, trends, case studies, practices, LEA/RUA/Patent filings/PVP filings that you would like to highlight for the CGIAR Annual IA Management Report"
+                                level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_general_highlights', '1.8. Please provide any relevant highlights, trends, case studies, practices, LEA/RUA/Patent filings/PVP filings that you would like to highlight for the CGIAR Annual IA Management Report') ?>
+                        1.8. Please provide any relevant highlights, trends, case studies, practices, LEA/RUA/Patent
+                        filings/PVP filings that you would like to highlight for the CGIAR Annual IA Management Report:
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?= trim($_iaReportWithDiff->ia_general_highlights) != '' ? nl2br(trim($_iaReportWithDiff->ia_general_highlights)) : 'NA' ?>
+                        </p>
+                    </ul>
+                    <br>
+
+                    <!--1.9-->
+                    <h5 class="font-light">
+                        <tocentry content="1.9. Additional Notes (anything else to report regarding this section)"
+                                  level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_additional_notes_1', '1.9. Additional Notes (anything else to report regarding this section)') ?>
+                        1.9. Additional Notes (anything else to report regarding this section):
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?= trim($_iaReportWithDiff->ia_additional_notes_1) != '' ? nl2br(trim($_iaReportWithDiff->ia_additional_notes_1)) : 'NA' ?>
+                        </p>
+                    </ul>
+
+                    <hr>
+                    <br>
+                <?php if (in_array(2, $this->sections)) { ?>
+                    <!--SECTION 2-->
+                    <h4 class="font-light">
+                        <tocentry
+                                content="SECTION 2" level="1"/>
+                        SECTION 2: Information related to the International Treaty on Plant Genetic Resources for Food
+                        and
+                        Agriculture (the Treaty) and other laws governing the access and utilization of genetic
+                        resources
+                        (e.g. pursuant to the Convention on Biological Diversity -CBD)
+                    </h4>
+                    <br>
+                    <br>
+
+                    <!--2.1-->
+                    <h5 class="font-light">
+                        <tocentry
+                                content="2.1. Facilitated access to Plant Genetic Resources for Food and Agriculture held by CGIAR Centers within the purview of the Treaty through Standard Material Transfer Agreements (SMTA)"
+                                level="2"/>
+                        2.1. Facilitated access to Plant Genetic Resources for Food and Agriculture held by CGIAR
+                        Centers
+                        within the purview of the Treaty through Standard Material Transfer Agreements (SMTA):
+                    </h5>
+                    <ul>
+                        <h6 class="font-light">
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_germplasm', '2.1.a Please confirm that transfers of plant germplasm for research and breeding managed under the multilateral system (MLS) of the Treaty were made using the SMTA') ?>
+                            2.1.a Please confirm that transfers of plant germplasm for research and breeding managed
+                            under
+                            the multilateral system (MLS) of the Treaty were made using the SMTA
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_germplasm_explain', 'Explanation') ?>
+                        </h6>
+                        <ul>
+                            <p class="text-center text-justify textarea-content font-14">
+                                <?php if ($this->ia_report->ia_germplasm == '0') { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_germplasm) ? 'No' : $_iaReportWithDiff->ia_germplasm ?>, Explanation:
+                                    <?= trim($_iaReportWithDiff->ia_germplasm_explain) != '' ? nl2br(trim($_iaReportWithDiff->ia_germplasm_explain)) : 'NA' ?>
+                                <?php } else if ($this->ia_report->ia_germplasm == '1') { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_germplasm) ? 'Yes' : $_iaReportWithDiff->ia_germplasm ?>
+                                <?php } else { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_germplasm) ? 'Not applicable as there have been no transfers of MLS materials' : $_iaReportWithDiff->ia_germplasm ?>
+                                <?php } ?>
+                            </p>
+                        </ul>
+                        <h6 class="font-light">
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_smta', '2.1.b If the reporting of transfers pursuant to an SMTA is not automated (e.g. the Center uses EasySMTA), please confirm whether the SMTA transfers made during the IA reporting period have been officially reported to the International Treaty. (Note, the official requirement commitment is to report every 2 years):') ?>
+                            2.1.b If the reporting of transfers pursuant to an SMTA is not automated (e.g. the Center
+                            uses
+                            EasySMTA), please confirm whether the SMTA transfers made during the IA reporting period
+                            have
+                            been officially reported to the International Treaty. (Note, the official requirement
+                            commitment
+                            is to report every 2 years):
+                            <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_smta_explain', 'Explanation') ?>
+                        </h6>
+                        <ul>
+                            <p class="text-center text-justify textarea-content font-14">
+                                <?php if ($this->ia_report->ia_smta == '0') { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_smta) ? 'No' : $_iaReportWithDiff->ia_smta ?>, Explanation:
+                                    <?= trim($_iaReportWithDiff->ia_smta_explain) != '' ? nl2br(trim($_iaReportWithDiff->ia_smta_explain)) : 'NA' ?>
+                                <?php } else if ($this->ia_report->ia_smta == '1') { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_smta) ? 'Yes' : $_iaReportWithDiff->ia_smta ?>
+                                <?php } else { ?>
+                                    <?= is_numeric($_iaReportWithDiff->ia_smta) ? 'Not applicable as there have been no transfers of MLS materials' : $_iaReportWithDiff->ia_smta ?>
+                                <?php } ?>
+                            </p>
+                        </ul>
+                    </ul>
+                    <br>
+
+                    <!--2.2-->
+                    <h5 class="font-light">
+                        <tocentry
+                                content="2.2. Measures for ensuring that acquisition and transfer of genetic resources is conducted in accordance with applicable laws"
+                                level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_policies', '2.2. Measures for ensuring that acquisition and transfer of genetic resources is conducted in accordance with applicable laws') ?>
+                        2.2. Measures for ensuring that acquisition and transfer of genetic resources is conducted in
+                        accordance with applicable laws:
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_policies_explain', 'Explanation') ?>
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?php if (!is_numeric($_iaReportWithDiff->ia_policies)) { ?>
+                                <?= $_iaReportWithDiff->ia_policies ?>, Explanation:
+                            <?php } else { ?>
+                                <?= $this->ia_report->ia_policies == '0' ? 'No' : 'Yes' ?>, Explanation:
+                            <?php } ?>
+                            <?= trim($_iaReportWithDiff->ia_policies_explain) != '' ? nl2br(trim($_iaReportWithDiff->ia_policies_explain)) : 'NA' ?>
+                        </p>
+                    </ul>
+                    <br>
+
+                    <!--2.3-->
+                    <h5 class="font-light">
+                        <tocentry content="2.3. Farmers Rights" level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_highlights_explain', '2.3. Farmers Rights') ?>
+                        2.3. Farmers Rights:
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?= trim($_iaReportWithDiff->ia_highlights_explain) != '' ? nl2br(trim($_iaReportWithDiff->ia_highlights_explain)) : 'NA' ?>
+                        </p>
+                    </ul>
+                    <br>
+
+                    <!--2.4-->
+                    <h5 class="font-light">
+                        <tocentry content="2.4. Anything else to report regarding this section" level="2"/>
+                        <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_additional_notes_2', '2.4. Anything else to report regarding this section') ?>
+                        2.4. Anything else to report regarding this section:
+                    </h5>
+                    <ul>
+                        <p class="text-center text-justify textarea-content font-14">
+                            <?= trim($_iaReportWithDiff->ia_additional_notes_2) != '' ? nl2br(trim($_iaReportWithDiff->ia_additional_notes_2)) : 'NA' ?>
+                        </p>
+                    </ul>
+
+                    <hr>
+                    <br>
+                <?php } ?>
+                <?php if (in_array(3, $this->sections)) { ?>
+                    <!--SECTION 3-->
+                    <h4 class="font-light">
+                        <tocentry
+                                content="SECTION 3" level="1"/>
+                        SECTION 3: Reporting of Limited Exclusivity Agreements, Restricted Use Agreements, and IP
+                        Applications
+                    </h4>
+                    <br>
+                    <br>
+                    <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_agreements_general', '3.1. Reporting of Limited Exclusivity Agreements, Restricted Use Agreements, and IP Applications') ?>
+                    <br>
+                    <br>
+                    <?= prepareEmbeddedComment($_comments, 'ia_form', $this->ia_report->ia_report_id, 'ia_public_disclosures_general', '3.2. Public disclosures associated with Limited Exclusivity Agreements, Restricted Use Agreements, and IP Applications') ?>
+
+                    <?php
+                    $_sheets = array(
+                        'LEA' => array(
+                            'ia_agreement_id' => 'ID',
+                            'ia_agreement_type' => 'Type of restricted arrangement',
+                            'organization_name' => 'Reporting Center',
+                            'first_reporting_year' => '1st year reported',
+                            'last_reporting_year' => 'Latest year reported',
+                            'unique_identifier' => 'Unique Identifier',
+                            'agreement_title' => '3.1.3 Title of agreement',
+                            'parties_name_string' => '3.1.8 Name of parties',
+                            'start_date' => '3.1.9 Agreement effective date',
+                            'end_date' => '3.1.10 Agreement end date',
+                            'is_agreement_related_string' => '3.1.13 Is the remaining information identical to another reported LEA, RUA or IP Application?',
+                            'agreement_related_post_string' => '3.1.14 Reported LEA, RUA or IP Application',
+                            'project_collaboration' => '3.1.15 Description of project/collaboration to which the agreement relates',
+                            'arrangements_exclusivity' => '3.1.16 General description of the arrangements conferring exclusivity for commercialization',
+                            'collaboration_exclusivity' => '3.1.21 Explain, in the specific context of the project/collaboration, why the exclusivity is necessary for the further improvement of the Intellectual Assets produced, in furtherance of the CGIAR Vision” and/or to “enhance the scale or scope of impact on target beneficiaries, in furtherance of the CGIAR Vision”',
+                            'exclusivity_explain' => '3.1.22 Explain how the exclusivity is “as limited as possible” (in duration, territory and/or field of use)',
+                            'research_exemption' => '3.1.23 Confirm that the agreement contains a Research Exemption and indicate how the Intellectual Assets remain available, free-of-charge (except for actual costs or reasonable processing fees) or at a reasonable cost, in all countries for non-commercial research conducted by public sector organizations in furtherance of the CGIAR Vision. Alternatively, if the agreement does not contain a Research Exemption, please include the request for deviation and the approval by the System Organization of such deviation under Article 6.2.2., or provide particulars concerning the third-party restrictions permitted under Article 6.3',
+                            'emergency_exemption' => '3.1.24 Confirm that the agreement contains an Emergency Exemption and explain how the Intellectual Assets remain available, free of charge (except for actual costs or reasonable processing fees) or at a reasonable cost, in all countries, in the event of a national or regional Food Security Emergency for the duration of the emergency. Alternatively, if the agreement does not contain an Emergency Exemption, please include the request for deviation and the approval by the Consortium of such deviation under Article 6.2.2., or provide particulars concerning the third-party restrictions permitted under Article 6.2.3',
+                            //Pre-2020
+                            'restricted_agreement_string' => '3.1.32 Is the Intellectual Asset that is the subject of the restricted arrangement(s) derived from in-trust germplasm or plant genetic resources obtained under SMTA from the Multilateral System of the ITPGFA?',
+                            'restricted_agreement_no_explain' => '3.1.33 If no, please explain rationale',
+                            'collection_information' => '3.1.34 Please indicate the accession name(s)/number(s), and date and place of collection, if known',
+                            'is_monetary_benefit_string' => '3.1.35 Will (or could) the monetary benefit sharing obligations pursuant to the SMTA (be) triggered upon commercialization of the IA?',
+                            'monetary_benefit_explain' => '3.1.36 please explain how this is addressed or will be addressed in the restricted arrangement and/or downstream arrangements',
+                            'is_ia_limitations_string' => '3.1.37 Is the Intellectual Asset that is the subject of the restricted arrangement(s) derived from biological or genetic resources obtained outside of the Multilateral System of the ITPGFA?',
+                            'ia_limitations_clearance' => '3.1.38 Please include a statement affirming that the Intellectual Asset is not subject to limitations arising from ABS (Access and Benefit Sharing) agreements or laws that are inconsistent with the restricted arrangement',
+                            //Post-2020
+                            'germplasm_incorporated_string' => '3.1.32 Does the intellectual asset incorporate any level of germplasm obtained from in trust collections or under the SMTA used for transferring plant genetic resources under the International Treaty on Plant Genetic Resources for Food and Agriculture?',
+                            'commercializing_benefit' => '3.1.33 Please explain if the licensee or a downstream entity commercializing the intellectual assets (or derivatives) will be bound by the benefit sharing requirements under the SMTA.',
+                            'no_commercializing_benefit' => '3.1.34 In case the licensee or a downstream entity commercializing the intellectual asset (or derivatives) will not be bound by the benefit-sharing requirements under the SMTA, have you considered some form of voluntary monetary benefit-sharing (either by your Center or your licensees)?',
+                            'germplasm_incorporated_no_explain' => '3.1.35 Have you considered some form of voluntary monetary benefit-sharing (either by your Center or your licensees)?',
+                            'is_biological_resources_utilized_string' => '3.1.36 Has the intellectual asset been developed utilizing biological resources (including genetic resources) that were not obtained from an in trust collection or under the SMTA?',
+                            'biological_resources_utilized_benefit_string' => '3.1.37 Is your utilization of the biological resources subject to access and benefit-sharing (ABS)obligations?',
+                            'abs_obligations_compliance' => '3.1.38 Please describe the measures you have adopted to ensure compliance with applicable ABS obligations',
+                            'no_abs_obligations_apply' => '3.1.39 Please describe the measures you followed to ascertain that no ABS obligations apply',
+
+                            'licensing_plan' => '3.1.40 Unless addressed above, please explain the strategy/plan and anticipated timeline for development and dissemination/licensing of the Intellectual Asset that is the subject of the restricted arrangement(s)',
+                            'updates' => 'Updates/comments'
+                        ),
+                        'RUA' => array(
+                            'ia_agreement_id' => 'ID',
+                            'ia_agreement_type' => 'Type of restricted arrangement',
+                            'organization_name' => 'Reporting Center',
+                            'first_reporting_year' => '1st year reported',
+                            'last_reporting_year' => 'Latest year reported',
+                            'unique_identifier' => 'Unique Identifier',
+                            'agreement_title' => '3.1.3 Title of agreement',
+                            'parties_name_string' => '3.1.8 Name of parties',
+                            'start_date' => '3.1.9 Agreement effective date',
+                            'end_date' => '3.1.10 Agreement end date',
+                            'is_agreement_related_string' => '3.1.13 Is the remaining information identical to another reported LEA, RUA or IP Application?',
+                            'agreement_related_post_string' => '3.1.14 Reported LEA, RUA or IP Application',
+                            'project_collaboration' => '3.1.15 Description of project/collaboration to which the agreement relates',
+                            'third_party_ia' => '3.1.17 Description of third-party IA that are acquired and how they are to be used under the agreement, including the downstream restrictions to the global accessibility of the products/services resulting from their use',
+                            'equivalent_intellectual_availability' => '3.1.25 Describe why, to the best of the Center’s knowledge, no equivalent Intellectual Assets were available from other sources under no or less restrictive conditions',
+                            'intellectual_impact' => '3.1.26 Explain how “the products/ services that are intended to result from the use of such third-party Intellectual Assets will further the CGIAR Vision in the countries where they can be made available”',
+                            'intellectual_use_measures' => '3.1.27 Describe any measures taken to ensure that the third-party Intellectual Assets are only used in relation to, or incorporated into, such intended products/services',
+                            //Pre-2020
+                            'restricted_agreement_string' => '3.1.32 Is the Intellectual Asset that is the subject of the restricted arrangement(s) derived from in-trust germplasm or plant genetic resources obtained under SMTA from the Multilateral System of the ITPGFA?',
+                            'restricted_agreement_no_explain' => '3.1.33 If no, please explain rationale',
+                            'collection_information' => '3.1.34 Please indicate the accession name(s)/number(s), and date and place of collection, if known',
+                            'is_monetary_benefit_string' => '3.1.35 Will (or could) the monetary benefit sharing obligations pursuant to the SMTA (be) triggered upon commercialization of the IA?',
+                            'monetary_benefit_explain' => '3.1.36 please explain how this is addressed or will be addressed in the restricted arrangement and/or downstream arrangements',
+                            'is_ia_limitations_string' => '3.1.37 Is the Intellectual Asset that is the subject of the restricted arrangement(s) derived from biological or genetic resources obtained outside of the Multilateral System of the ITPGFA?',
+                            'ia_limitations_clearance' => '3.1.38 Please include a statement affirming that the Intellectual Asset is not subject to limitations arising from ABS (Access and Benefit Sharing) agreements or laws that are inconsistent with the restricted arrangement',
+                            //Post-2020
+                            'germplasm_incorporated_string' => '3.1.32 Does the intellectual asset incorporate any level of germplasm obtained from in trust collections or under the SMTA used for transferring plant genetic resources under the International Treaty on Plant Genetic Resources for Food and Agriculture?',
+                            'commercializing_benefit' => '3.1.33 Please explain if the licensee or a downstream entity commercializing the intellectual assets (or derivatives) will be bound by the benefit sharing requirements under the SMTA.',
+                            'no_commercializing_benefit' => '3.1.34 In case the licensee or a downstream entity commercializing the intellectual asset (or derivatives) will not be bound by the benefit-sharing requirements under the SMTA, have you considered some form of voluntary monetary benefit-sharing (either by your Center or your licensees)?',
+                            'germplasm_incorporated_no_explain' => '3.1.35 Have you considered some form of voluntary monetary benefit-sharing (either by your Center or your licensees)?',
+                            'is_biological_resources_utilized_string' => '3.1.36 Has the intellectual asset been developed utilizing biological resources (including genetic resources) that were not obtained from an in trust collection or under the SMTA?',
+                            'biological_resources_utilized_benefit_string' => '3.1.37 Is your utilization of the biological resources subject to access and benefit-sharing (ABS)obligations?',
+                            'abs_obligations_compliance' => '3.1.38 Please describe the measures you have adopted to ensure compliance with applicable ABS obligations',
+                            'no_abs_obligations_apply' => '3.1.39 Please describe the measures you followed to ascertain that no ABS obligations apply',
+
+                            'licensing_plan' => '3.1.40 Unless addressed above, please explain the strategy/plan and anticipated timeline for development and dissemination/licensing of the Intellectual Asset that is the subject of the restricted arrangement(s)',
+                            'updates' => 'Updates/comments'
+                        ),
+                        'IP Application' => array(
+                            'ia_agreement_id' => 'ID',
+                            'ia_agreement_type' => 'Type of restricted arrangement',
+                            'organization_name' => 'Reporting Center',
+                            'first_reporting_year' => '1st year reported',
+                            'last_reporting_year' => 'Latest year reported',
+                            'unique_identifier' => 'Unique Identifier',
+                            'ip_type' => '3.1.2 IP type',
+                            'agreement_title' => '3.1.3 Title of application for protection',
+                            'agreement_related_portfolio_string' => '3.1.4 Relevant application that is being reported in this reporting cycle (as per the unique identifier in section 1.5.a or 1.5.b)',
+                            'filing_type_1' => '3.1.5 Type of Filing - 1',
+                            'filing_type_2' => '3.1.6 Type of Filing - 2',
+                            'country' => '3.1.7 Country',
+                            'start_date' => '3.1.9 Application date',
+                            'applicant_name_string' => '3.1.11 Name of applicant and inventors/breeders',
+                            'approximate_costs' => '3.1.12 The approximate costs involved',
+                            'is_agreement_related_string' => '3.1.13 Is the remaining information identical to another reported LEA, RUA or IP Application?',
+                            'agreement_related_post_string' => '3.1.14 Reported LEA, RUA or IP Application',
+                            'protected_subject_matter' => '3.1.18 Description of protected subject matter',
+                            'application_related_project' => '3.1.19 Description of project to which the application relates',
+                            'intellectual_value_explain' => '3.1.20 Why is the intellectual asset useful? How does it contribute to advance the Center’s and CGIAR mission?',
+                            'application_status' => '3.1.28 Please describe the current status of the application and progress of prosecution',
+                            'application_necessary' => '3.1.29 Explain how the IP Application was “necessary for the further improvement of the Intellectual Assets or to enhance the scale or scope of impact on target beneficiaries, in furtherance of the CGIAR Vision”',
+                            'dissemination_strategy' => '3.1.30 Describe the dissemination strategy including how the Center will promote accessibility and use of the innovation by third-parties (including smallholder farmers and public research organizations)',
+                            'applicable_smta_respect' => '3.1.31 Describe the Center’s plan to respect applicable SMTA related obligations including monetary benefit-sharing obligations, if the asset is derived from PGRFA received from the MLS',
+                            //Pre-2020
+                            'restricted_agreement_string' => '3.1.32 Is the Intellectual Asset that is the subject of the restricted arrangement(s) derived from in-trust germplasm or plant genetic resources obtained under SMTA from the Multilateral System of the ITPGFA?',
+                            'restricted_agreement_no_explain' => '3.1.33 If no, please explain rationale',
+                            'collection_information' => '3.1.34 Please indicate the accession name(s)/number(s), and date and place of collection, if known',
+                            'is_monetary_benefit_string' => '3.1.35 Will (or could) the monetary benefit sharing obligations pursuant to the SMTA (be) triggered upon commercialization of the IA?',
+                            'monetary_benefit_explain' => '3.1.36 please explain how this is addressed or will be addressed in the restricted arrangement and/or downstream arrangements',
+                            'is_ia_limitations_string' => '3.1.37 Is the Intellectual Asset that is the subject of the restricted arrangement(s) derived from biological or genetic resources obtained outside of the Multilateral System of the ITPGFA?',
+                            'ia_limitations_clearance' => '3.1.38 Please include a statement affirming that the Intellectual Asset is not subject to limitations arising from ABS (Access and Benefit Sharing) agreements or laws that are inconsistent with the restricted arrangement',
+                            //Post-2020
+                            'germplasm_incorporated_string' => '3.1.32 Does the intellectual asset incorporate any level of germplasm obtained from in trust collections or under the SMTA used for transferring plant genetic resources under the International Treaty on Plant Genetic Resources for Food and Agriculture?',
+                            'commercializing_benefit' => '3.1.33 Please explain if the licensee or a downstream entity commercializing the intellectual assets (or derivatives) will be bound by the benefit sharing requirements under the SMTA.',
+                            'no_commercializing_benefit' => '3.1.34 In case the licensee or a downstream entity commercializing the intellectual asset (or derivatives) will not be bound by the benefit-sharing requirements under the SMTA, have you considered some form of voluntary monetary benefit-sharing (either by your Center or your licensees)?',
+                            'germplasm_incorporated_no_explain' => '3.1.35 Have you considered some form of voluntary monetary benefit-sharing (either by your Center or your licensees)?',
+                            'is_biological_resources_utilized_string' => '3.1.36 Has the intellectual asset been developed utilizing biological resources (including genetic resources) that were not obtained from an in trust collection or under the SMTA?',
+                            'biological_resources_utilized_benefit_string' => '3.1.37 Is your utilization of the biological resources subject to access and benefit-sharing (ABS)obligations?',
+                            'abs_obligations_compliance' => '3.1.38 Please describe the measures you have adopted to ensure compliance with applicable ABS obligations',
+                            'no_abs_obligations_apply' => '3.1.39 Please describe the measures you followed to ascertain that no ABS obligations apply',
+
+                            'licensing_plan' => '3.1.40 Unless addressed above, please explain the strategy/plan and anticipated timeline for development and dissemination/licensing of the Intellectual Asset that is the subject of the restricted arrangement(s)',
+                            'updates' => 'Updates/comments'
+                        )
+                    );
+
+                    $_agreementPre2020Fields = array(
+                        'restricted_agreement_string',
+                        'restricted_agreement_no_explain',
+                        'collection_information',
+                        'is_monetary_benefit_string',
+                        'monetary_benefit_explain',
+                        'is_ia_limitations_string',
+                        'ia_limitations_clearance'
+                    );
+                    $_agreementPost2020Fields = array(
+                        'germplasm_incorporated_string',
+                        'commercializing_benefit',
+                        'no_commercializing_benefit',
+                        'germplasm_incorporated_no_explain',
+                        'is_biological_resources_utilized_string',
+                        'biological_resources_utilized_benefit_string',
+                        'abs_obligations_compliance',
+                        'no_abs_obligations_apply'
+                    );
+
+                    $_agreementsFieldsMapping = array(
+                        'parties_name_string' => 'parties_name[]',
+                        'is_agreement_related_string' => 'is_agreement_related',
+                        'agreement_related_post_string' => 'agreement_related_post',
+
+                        'restricted_agreement_string' => 'restricted_agreement',
+                        'is_monetary_benefit_string' => 'is_monetary_benefit',
+
+                        'germplasm_incorporated_string' => 'germplasm_incorporated',
+                        'is_biological_resources_utilized_string' => 'is_biological_resources_utilized',
+                        'biological_resources_utilized_benefit_string' => 'biological_resources_utilized_benefit',
+
+                        'is_ia_limitations_string' => 'is_ia_limitations',
+                        'country' => 'country_id',
+                        'applicant_name_string' => 'applicant_name[]',
+                        'agreement_related_portfolio_string' => 'agreement_related_portfolio'
+                    );
+
+                    $_agreementReviewLabels = array(
+                        'reviewed_by' => 'Reviewed by',
+                        'to_display_name' => 'Submitted to',
+                        'review_date' => 'Review date',
+                        'grade_display_name' => 'Grade',
+                        'comments' => 'Internal comments',
+                        'justification_comments' => 'Justification',
+                        'mls_abs_comments' => 'MLS/ABS',
+                        'evaluation_comments' => 'Evaluation'
+                    );
+
+                    $_publicDisclosureLabels = array(
+                        'ia_agreement_public_disclosure_id' => 'Public Disclosure ID',
+                        'first_reporting_year' => '1st year reported',
+                        'last_reporting_year' => 'Latest year reported',
+                        'no_public_disclosure_string' => '3.2.2 Public disclosure issued',
+                        'no_public_disclosure_explain' => '3.2.3 Explanation',
+                        'public_disclosure_link' => '3.2.4.1 Public disclosures related to this agreement/application (link)',
+                        'public_disclosure_document' => '3.2.4.1 Public disclosures related to this agreement/application (document)',
+                        'other_links' => '3.2.4.2 Secondary disclosures and other public records',
+                        'is_public_disclosure_provided_string' => '3.2.5 Public disclosure reported to system organization',
+                        'public_disclosure_not_provided_explain' => '3.2.6 Explanation',
+                        'anticipated_public_disclosure_string' => '3.2.7 Anticipated public disclosure or updated disclosure',
+                        'anticipated_public_disclosure_date' => '3.2.8 Anticipated public disclosure or updated disclosure date',
+                        'updates' => 'Updates/comments'
+                    );
+
+                    $_publicDisclosuresPre2020Fields = array(
+                        'is_public_disclosure_provided_string',
+                        'public_disclosure_not_provided_explain'
+                    );
+                    $_publicDisclosuresPost2020Fields = array();
+
+                    $_publicDisclosuresFieldsMapping = array(
+                        'no_public_disclosure_string' => 'no_public_disclosure',
+                        'is_public_disclosure_provided_string' => 'is_public_disclosure_provided',
+                        'anticipated_public_disclosure_string' => 'anticipated_public_disclosure'
+                    );
+
+                    $_publicDisclosureReviewLabels = array(
+                        'reviewed_by' => 'Reviewed by',
+                        'to_display_name' => 'Submitted to',
+                        'review_date' => 'Review date',
+                        'grade_display_name' => 'Grade',
+                        'comments' => 'Internal comments',
+                        'external_comments' => 'Comments'
+                    );
+
+                    $_dataArray = array(
+                        'LEA' => $this->ia_report->GetAgreementsForExport('LEA', $this->section_3_unique, false),
+                        'RUA' => $this->ia_report->GetAgreementsForExport('RUA', $this->section_3_unique, false),
+                        'IP Application' => $this->ia_report->GetAgreementsForExport('IP Application', $this->section_3_unique, false)
+                    );
+                    $_dataArray = GetAgreementsDiff($_dataArray, $this->ia_report, $this->show_center_feedback);
+
+                    $_agreementEntity = new Model_IaReportAgreements();
+                    $_publicDisclosureEntity = new Model_IaReportAgreementPublicDisclosure();
+
+                    foreach ($_sheets as $_sheet => $_columnsArray) {
+                        if (count($_dataArray[$_sheet]) === 0)
+                            continue;
+                        ?>
+                        <h5 class="font-light">
+                            <tocentry content="<?= $_sheet ?>" level="2"/>
+                            <?= $_sheet ?>:
+                        </h5>
+                        <table class="table table-striped table-bordered table-hover font-11">
+                            <tbody>
+                            <?php
+                            if (count($_dataArray[$_sheet]) === 0) {
+                                echo 'NA';
+                                continue;
+                            }
+                            $_coloredColumns = array(
+                                'ia_agreement_id' => 'background-color: #e6efe7;',
+                                'ia_agreement_type' => 'background-color: #e6efe7;',
+                                'organization_name' => 'background-color: #e6efe7;',
+                                'first_reporting_year' => 'background-color: #e6efe7;',
+                                'last_reporting_year' => 'background-color: #e6efe7;',
+                                'unique_identifier' => 'background-color: #e6efe7;',
+                                'ip_type' => 'background-color: #e6efe7;',
+                                'agreement_title' => 'background-color: #e6efe7;'
+                            );
+
+                            $_html = '';
+                            foreach ($_dataArray[$_sheet] as $_key => $_row) {
+                                $_backgroundColor = 'background-color: #e6efe7';
+                                if ($_key !== 0)
+                                    $_html .= '<tr><td class="table-cell" colspan="2" style="' . $_backgroundColor . '"></td></tr>';
+
+                                $_agreementEntity->reporting_year = $_row['reporting_year'];
+                                $_agreementEntity->ia_agreement_id = $_row['ia_agreement_id'];
+                                $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_agreementEntity, $this->ia_report, $this->show_center_feedback);
+
+                                $_row['updates'] = $_updatedRecordInfo['updates'];
+                                $_row['first_reporting_year'] = $_updatedRecordInfo['first_reporting_year'];
+                                $_row['last_reporting_year'] = $_updatedRecordInfo['last_reporting_year'];
+
+                                foreach ($_columnsArray as $_column => $_label) {
+                                    if ($_row['reporting_year'] < 2020 && in_array($_column, $_agreementPost2020Fields))
+                                        continue;
+                                    elseif ($_row['reporting_year'] >= 2020 && in_array($_column, $_agreementPre2020Fields))
+                                        continue;
+                                    $_comment = prepareEmbeddedComment($_comments, 'ia_agreement_form', $_row['ia_agreement_id'], isset($_agreementsFieldsMapping[$_column]) ? $_agreementsFieldsMapping[$_column] : $_column, '', false);
+                                    $_value = isset($_row[$_column]) ? $_row[$_column] : 'NA';
+                                    $_value = nl2br($_value);
+                                    $_html .= '<tr>';
+                                    $_cellStyle = isset($_coloredColumns[$_column]) ? $_coloredColumns[$_column] : '';
+                                    $_cellStyle .= $_column === 'ia_agreement_id' && isset($_row['cell_style']) ? $_row['cell_style'] : '';
+                                    $_html .= '<td class="table-cell" style="width: 35%; ' . $_cellStyle . '">' . $_comment . '<b>' . $_label . '</b></td>';
+                                    $_html .= '<td class="table-cell" style="' . $_cellStyle . '">' . $_value . '</td>';
+                                    $_html .= '</tr>';
+                                }
+
+                                if ($this->section_3_review) {
+                                    //Add agreement reviews
+                                    $_agreementReviews = $this->ia_report->GetIaReportAgreementReviews($_row['ia_agreement_id'], null, false);
+                                    if ($_agreementReviews['result'] === true && count($_agreementReviews['data']) > 0)
+                                        $_html .= '<tr><td class="table-cell" colspan="2" style="text-align: center;"><b>Reviews(s)</b></td></tr>';
+                                    foreach ($_agreementReviews['data'] as $_agreementReview) {
+                                        if (in_array($_agreementReview['user_group_from'] . '-' . $_agreementReview['user_group_to'], $this->reviews)) {
+                                            foreach ($_agreementReviewLabels as $_column => $_label) {
+                                                if ($_column === 'reviewed_by')
+                                                    $_value = isset($_agreementReview[$_column]) && $_agreementReview[$_column] != null ? $_agreementReview[$_column] . ' (' . $_agreementReview['from_display_name'] . ')' : $_agreementReview['from_display_name'];
+                                                elseif ($_column === 'to_display_name' && $_agreementReview['is_draft'] == '1')
+                                                    $_value = 'Draft';
+                                                else
+                                                    $_value = isset($_agreementReview[$_column]) && !empty($_agreementReview[$_column]) ? $_agreementReview[$_column] : 'NA';
+                                                $_value = nl2br($_value);
+
+                                                $_html .= '<tr>';
+                                                $_html .= '<td class="table-cell"><b>' . $_label . '</b></td>';
+                                                $_html .= '<td class="table-cell">' . $_value . '</td>';
+                                                $_html .= '</tr>';
+                                            }
+                                        }
+                                    }
+                                }
+
+                                //Add public disclosures
+                                $_publicDisclosures = $this->ia_report->GetPublicDisclosuresForExport($_row['ia_agreement_id'], $this->section_3_unique, false);
+                                $_publicDisclosures = GetPublicDisclosuresDiff($_publicDisclosures, $this->ia_report, $this->show_center_feedback);
+                                if (count($_publicDisclosures) > 0)
+                                    $_html .= '<tr><td class="table-cell" colspan="2" style="text-align: center;"><b>Public disclosure(s)</b></td></tr>';
+                                foreach ($_publicDisclosures as $_publicDisclosure) {
+                                    $_publicDisclosureEntity->reporting_year = $_publicDisclosure['reporting_year'];
+                                    $_publicDisclosureEntity->ia_agreement_public_disclosure_id = $_publicDisclosure['ia_agreement_public_disclosure_id'];
+                                    $_updatedRecordInfo = $this->ia_report->GetUpdatedRecordInfo($_publicDisclosureEntity, $this->ia_report, $this->show_center_feedback);
+
+                                    $_publicDisclosure['updates'] = $_updatedRecordInfo['updates'];
+                                    $_publicDisclosure['first_reporting_year'] = $_updatedRecordInfo['first_reporting_year'];
+                                    $_publicDisclosure['last_reporting_year'] = $_updatedRecordInfo['last_reporting_year'];
+
+                                    try {
+                                        $_publicDisclosure['other_links'] = Zend_Json::decode($_publicDisclosure['other_links']);
+                                        $_publicDisclosure['other_links'] = '- ' . implode('<br>- ', $_publicDisclosure['other_links']);
+                                    } catch (Exception $e) {
+                                    }
+
+                                    foreach ($_publicDisclosureLabels as $_column => $_label) {
+                                        if ($_publicDisclosure['reporting_year'] < 2020 && in_array($_column, $_publicDisclosuresPost2020Fields))
+                                            continue;
+                                        elseif ($_publicDisclosure['reporting_year'] >= 2020 && in_array($_column, $_publicDisclosuresPre2020Fields))
+                                            continue;
+                                        $_comment = prepareEmbeddedComment($_comments, 'ia_agreement_public_disclosure_form', $_publicDisclosure['ia_agreement_public_disclosure_id'], isset($_publicDisclosuresFieldsMapping[$_column]) ? $_publicDisclosuresFieldsMapping[$_column] : $_column, '', false);
+                                        $_value = isset($_publicDisclosure[$_column]) ? $_publicDisclosure[$_column] : 'NA';
+                                        $_value = nl2br($_value);
+
+                                        $_html .= '<tr>';
+                                        $_cellStyle = $_column === 'ia_agreement_public_disclosure_id' && isset($_publicDisclosure['cell_style']) ? $_publicDisclosure['cell_style'] : '';
+                                        $_html .= '<td class="table-cell" style="' . $_cellStyle . '">' . $_comment . '<b>' . $_label . '</b></td>';
+                                        if ($_column === 'public_disclosure_document')
+                                            $_value = '<span class="diff_container">' . html_entity_decode($_value) . '</span>';
+                                        $_html .= '<td class="table-cell" style="' . $_cellStyle . '">' . $_value . '</td>';
+                                        $_html .= '</tr>';
+                                    }
+
+                                    if ($this->section_3_review) {
+                                        //Add public disclosures reviews
+                                        $_publicDisclosuresReviews = $this->ia_report->GetIaReportAgreementReviews(null, $_publicDisclosure['ia_agreement_public_disclosure_id'], false);
+                                        if ($_publicDisclosuresReviews['result'] === true && count($_publicDisclosuresReviews['data']) > 0)
+                                            $_html .= '<tr><td class="table-cell" colspan="2" style="text-align: center;"><b>Reviews(s)</b></td></tr>';
+                                        foreach ($_publicDisclosuresReviews['data'] as $_publicDisclosuresReview) {
+                                            if (in_array($_publicDisclosuresReview['user_group_from'] . '-' . $_publicDisclosuresReview['user_group_to'], $this->reviews)) {
+                                                foreach ($_publicDisclosureReviewLabels as $_column => $_label) {
+                                                    if ($_column === 'reviewed_by')
+                                                        $_value = isset($_publicDisclosuresReview[$_column]) && $_publicDisclosuresReview[$_column] != null ? $_publicDisclosuresReview[$_column] . ' (' . $_publicDisclosuresReview['from_display_name'] . ')' : $_publicDisclosuresReview['from_display_name'];
+                                                    elseif ($_column === 'to_display_name' && $_publicDisclosuresReview['is_draft'] == '1')
+                                                        $_value = 'Draft';
+                                                    else
+                                                        $_value = isset($_publicDisclosuresReview[$_column]) && !empty($_publicDisclosuresReview[$_column]) ? $_publicDisclosuresReview[$_column] : 'NA';
+                                                    $_value = nl2br($_value);
+
+                                                    $_html .= '<tr>';
+                                                    $_html .= '<td class="table-cell"><b>' . $_label . '</b></td>';
+                                                    $_html .= '<td class="table-cell">' . $_value . '</td>';
+                                                    $_html .= '</tr>';
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            echo $_html;
+                            ?>
+                        </table>
+                    <?php } ?>
+
+                <?php } ?>
+            </div>
+
+        </div>
+    </div>
+    <!-- /.container -->
+</section>
+

@@ -1,0 +1,729 @@
+<p>
+    This beta-version of the IA eReporting tool has been developed by IT colleagues at ICARDA for the submission of the
+    2019 Center IA Reports. Only fields marked <span style="color: #bd0000">*</span> are compulsory.
+    <br><br>
+    To ‘save a draft’ or ‘submit’ please use the buttons at the bottom of the Form. To ‘report a bug’ please use the
+    button at the bottom left-hand corner of the Form. For technical queries or clarifications regarding the content of
+    the report, please contact <a href="mailto:ia-reporting@cgiar.org" target="_blank">ia-reporting@cgiar.org</a>.
+    <br><br>
+    To submit supplementary information or to include information in a format that cannot be entered into a text field
+    (e.g. table or image), please consolidate into a single PDF or Word document and upload using the 'supplementary
+    information’ function below. To facilitate review, please clearly reference the relevant (sub)section of the
+    eReport in the document.
+</p>
+
+<form action="<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'submitiareport'), null, true) ?>"
+      id="ia_form" method="post" class="form-horizontal" enctype="multipart/form-data">
+    <div class="form-body">
+        <input type="hidden" class="item_id_input" name="ia_report_id">
+        <input type="hidden" name="is_draft">
+        <input type="hidden" name="submit_review">
+
+        <div class="portlet box mel-blue" id="ia_section_1">
+            <div class="portlet-title">
+                <div class="caption">
+                    <b>SECTION 1:</b> General Center Information
+                </div>
+                <div class="tools">
+                    <a href="javascript:;" class="collapse"></a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="form-group">
+                    <label class="col-md-6">
+                        <b>Reporting Year</b>
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <input class="form-control date-picker required draft_required commentable" readonly
+                               name="reporting_year"
+                               placeholder="Reporting Year" data-date_format="yyyy" data-date_viewMode="years"
+                               data-date_minViewMode="years">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-6">
+                        <b>Supplementary information</b>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="row upload_parent">
+                            <div class="col-md-12">
+                                <div class="input-group">
+                                    <div class="input-group-btn">
+                                        <button type="button" id="upload_supplementary_information"
+                                                role="button" class="btn btn-default uploader_button">
+                                            <i class="glyphicon glyphicon-file" aria-hidden="true"></i> Upload File
+                                        </button>
+
+                                        <a style="display: none; z-index: 2" type="button" role="button" target="_blank"
+                                           href="" download="" class="btn btn-default uploader_view">
+                                            <i class="glyphicon glyphicon-cloud-download"
+                                               aria-hidden="true"></i> View File
+                                        </a>
+                                        <button style="display: none; z-index: 2" type="button" role="button"
+                                                class="btn btn-default uploader_delete">
+                                            <i class="fa fa-trash-o" aria-hidden="true"></i>
+                                            Delete File
+                                        </button>
+                                    </div>
+                                    <input type="hidden" class="uploader_input commentable"
+                                           name="supplementary_information">
+                                </div>
+
+                                <p class="help-block">
+                                    <small>
+                                        <i>
+                                            Allowed extensions: jpg, jpeg, gif, png, tif, pdf, doc, docx, xls, xlsx,
+                                            ppt, pptx, rar and zip
+                                        </i>
+                                    </small>
+                                </p>
+
+                                <div class="progress progress-striped active uploader_progress" style="display: none">
+                                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="0"
+                                         aria-valuemin="0" aria-valuemax="100" style="width: 0px">
+                                        <span class="sr-only">0% Complete </span>
+                                    </div>
+                                    <p class="uploader_info" style="display: none"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>1.1. Center IP Focal Point and additional contacts</b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        Please provide the name(s) of the main point(s) of contact for the information contained
+                        in this report
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <select class="form-control select2User required draft_required ia_report_contacts_select commentable"
+                                    disabled_ids="ia_report_contacts_selected_ids" name="ia_report_contacts[]"
+                                    data-placeholder="Select Primary Contact..."
+                                    partner_id="<?= $this->ia_report['partner_id'] ?>">
+                                <option value=""></option>
+                            </select>
+                            <div class="input-group-btn">
+                                <button type="button" class="btn default popovers modals_btn_add_new_user"
+                                        data-trigger="hover" data-placement="top"
+                                        data-content="Add new user"
+                                        data-container="body">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <a href="javascript:void(0);" class="btn green" id="add_point_of_contact">
+                            Add authorised users
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="point_of_contacts">
+                            <div class="point_of_contact_rows">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>1.2. Center capacity related to IA management</b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        1.2.a. Please provide a description of the capacity related to the management of Intellectual
+                        Assets at your Center and whether there has been a material change since the previous reporting
+                        cycle
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <textarea class="form-control required commentable" rows="2" name="ia_description"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        1.2.b. Please list the training, workshops, capacity building, or other activities related to
+                        the
+                        management of Intellectual Assets at your Center, in which your staff delivered or participated
+                        during the reporting cycle
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <textarea class="form-control required commentable" rows="2"
+                                  name="ia_related_activities"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        1.2.c. Please confirm whether your Center considers its capacity related to the management of
+                        Intellectual Assets to be sufficient for its needs during the reporting cycle
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="radio-list" data-error-container="#ia_capacity_error">
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_capacity" class="required related_explain_box commentable"
+                                       data-target="ia_capacity_explain" value="1" data-show_value="0"> Yes
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_capacity" class="required related_explain_box"
+                                       data-target="ia_capacity_explain" value="0" data-show_value="0"> No
+                            </label>
+                        </div>
+                        <div id="ia_capacity_error"></div>
+                    </div>
+                </div>
+                <div class="form-group ia_capacity_explain" style="display: none">
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6">
+                        <label class="control-label">Please Explain:
+                            <span class="required"> * </span>
+                        </label>
+                        <textarea class="form-control required commentable" name="ia_capacity_explain"
+                                  rows="2"></textarea>
+                    </div>
+                </div>
+
+                <hr>
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>1.3. CRP/Platform capacity related to IA management:</b>
+                        <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                        <input type="hidden" class="commentable" name="ia_crp_general"
+                               data-comment_box_auto_add="false">
+                    </label>
+                </div>
+                <!-- info for Center IA management related documents --->
+                <div class="form-group">
+                    <label class="col-md-12">
+                        Does your Center lead or co-lead a CRP?
+                    </label>
+                    <div class="col-md-12">
+                        <?php if ($this->can_edit_ia_report) { ?>
+                            <div class="table-toolbar">
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-default stripe-down-blue strip-down btn_edit_ia_report_crp">
+                                        Add New <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <div id="ia_report_crp_table_holder"></div>
+                    </div>
+                </div>
+                <hr>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>1.4. Center policies and other resources related to IA Management:</b>
+                    </label>
+                </div>
+                <!-- info for Center IA management related documents --->
+                <div class="form-group">
+                    <label class="col-md-12">
+                        1.4.a. Please review below the IA management related official policies related to Intellectual
+                        Assets management which have been communicated to the System Organization.. Please ‘add’ or
+                        ‘update’ to reflect any changes during the reporting cycle
+                        <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                        <input type="hidden" class="commentable" name="ia_management_documents_general"
+                               data-comment_box_auto_add="false">
+                        <br>
+                        <i>Note: policies marked internal will not be displayed publicly</i>
+                    </label>
+                    <div class="col-md-12">
+                        <?php if ($this->can_edit_ia_report) { ?>
+                            <div class="table-toolbar">
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-default stripe-down-blue strip-down btn_edit_ia_management_document">
+                                        Add New <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <div id="ia_management_document_table_holder"></div>
+                    </div>
+                </div>
+                <hr>
+                <!-- info for Center IA management related documents --->
+                <div class="form-group">
+                    <label class="col-md-12">
+                        1.4.b. Please review below the other resources related to Intellectual Assets management (e.g.:
+                        Directives, Implementation Guidelines, Explanatory Notes, Templates, Tools, etc.) which have
+                        been communicated to the SO. Please ‘add’ or ‘update’ to reflect any changes during the
+                        reporting cycle
+                        <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                        <input type="hidden" class="commentable" name="ia_management_other_documents_general"
+                               data-comment_box_auto_add="false">
+                    </label>
+                    <div class="col-md-12">
+                        <?php if ($this->can_edit_ia_report) { ?>
+                            <div class="table-toolbar">
+                                <div class="btn-group">
+                                    <button type="button" data-is_other="true"
+                                            class="btn btn-default stripe-down-blue strip-down btn_edit_ia_management_document">
+                                        Add New <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <div id="ia_management_other_document_table_holder"></div>
+                    </div>
+                </div>
+                <hr>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>1.5. Center IA Portfolio of registered IP:</b>
+                    </label>
+                </div>
+
+                <!-- info for Center IA portfolio --->
+                <div class="form-group">
+                    <label class="col-md-12">
+                        Please review and add/update as necessary, the portfolio of trademarks, patents and PVP on file
+                        associated with your Center, whether (co)filed/(co)owned by the Center and a partner, or by
+                        third parties working with or on behalf of your Center
+                        <p style="color: #bd0000">
+                            Note 1: IP applications which advance from a provisional to a non-provisional status must be
+                            reported as a new restricted arrangement in Section 3 in the year in which the
+                            non-provisional filing occurs. Thereafter updates on progress are reported through the
+                            Center IA portfolio in this section.
+                        </p>
+                    </label>
+                    <div class="col-md-12">
+                        <!-- info for Center IA management related documents --->
+                        <?php if ($this->can_edit_ia_report) { ?>
+                            <div class="table-toolbar">
+                                <div class="btn-group">
+                                    <button class="btn btn-default stripe-down-blue strip-down btn_edit_ia_portfolio_document"
+                                            type="button">
+                                        Add New <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php } ?>
+                        <div class="form-group">
+                            <label class="col-md-12">
+                                1.5.a. Patents
+                                <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                                <input type="hidden" class="commentable" name="ia_patents_general"
+                                       data-comment_box_auto_add="false">
+                            </label>
+                        </div>
+                        <div class="table_holder" id="ia_portfolio_document_table_Patent_holder"></div>
+                        <hr>
+                        <div class="form-group">
+                            <label class="col-md-12">
+                                1.5.b. PVPs
+                                <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                                <input type="hidden" class="commentable" name="ia_pvps_general"
+                                       data-comment_box_auto_add="false">
+                            </label>
+                        </div>
+                        <div id="ia_portfolio_document_table_PVP_holder"></div>
+                        <hr>
+                        <div class="form-group">
+                            <label class="col-md-12">
+                                1.5.c. Trademarks
+                                <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                                <input type="hidden" class="commentable" name="ia_trademarks_general"
+                                       data-comment_box_auto_add="false">
+                            </label>
+                        </div>
+                        <div id="ia_portfolio_document_table_Trademark_holder"></div>
+                    </div>
+                </div>
+                <hr>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>
+                            1.6. Please describe key new or ongoing partnerships, arrangements, or collaborations that
+                            were impactful (eg: new or ongoing partnerships, arrangements, or collaborations that
+                            supported the conservation and widespread use of all genetic resources for food and
+                            agriculture or that otherwise furthered the CGIAR Vision) during the reporting cycle
+                        </b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                    </label>
+                    <div class="col-md-6">
+                        <textarea class="form-control commentable" rows="2" name="ia_partnerships"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>
+                            1.7. Please describe the Center’s approach(es) to maximizing the global accessibility and
+                            impact of its Intellectual Assets
+                        </b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                    </label>
+                    <div class="col-md-6">
+                        <textarea class="form-control commentable" rows="2" name="ia_management_approach"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>
+                            1.8. Please provide any relevant highlights, trends, case studies, practices, LEA/RUA/Patent
+                            filings/PVP filings that you would like to highlight for the CGIAR Annual IA Management
+                            Report
+                        </b>
+                        <br>
+                        Note that information in this area will be shared externally (outside CGIAR)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                    </label>
+                    <div class="col-md-6">
+                        <textarea class="form-control commentable" rows="2" name="ia_general_highlights"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>1.9. Additional Notes (anything else to report regarding this section)</b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                    </label>
+                    <div class="col-md-6">
+                        <textarea class="form-control commentable" rows="2" name="ia_additional_notes_1"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--  section 1 --->
+        <div class="portlet box mel-green" id="ia_section_2">
+            <div class="portlet-title">
+                <div class="caption">
+                    <b>SECTION 2:</b> Information related to the International Treaty on Plant Genetic Resources for
+                    Food and Agriculture (the Treaty) and other laws governing the access and utilization of genetic
+                    resources (e.g. pursuant to the Convention on Biological Diversity -CBD)
+                </div>
+                <div class="tools">
+                    <a href="javascript:;" class="collapse">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>2.1. Facilitated access to Plant Genetic Resources for Food and Agriculture held by CGIAR
+                            Centers within the purview of the Treaty through Standard Material Transfer Agreements
+                            (SMTA)</b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        2.1.a Please confirm that transfers of plant germplasm for research and breeding managed under
+                        the
+                        multilateral system (MLS) of the Treaty were made using the SMTA
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="radio-list" data-error-container="#ia_germplasm_error">
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_germplasm" class="required related_explain_box commentable"
+                                       data-target="ia_germplasm_explain" value="1" data-show_value="0"> Yes
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_germplasm" class="required related_explain_box"
+                                       data-target="ia_germplasm_explain" value="0" data-show_value="0"> No
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_germplasm" class="required related_explain_box"
+                                       data-target="ia_germplasm_explain" value="2" data-show_value="0">
+                                Not applicable as there have been no transfers of MLS materials
+                            </label>
+                        </div>
+                        <div id="ia_germplasm_error"></div>
+                    </div>
+                </div>
+                <div class="form-group ia_germplasm_explain" style="display: none">
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6">
+                        <label class="control-label">Please Explain:
+                            <span class="required"> * </span>
+                        </label>
+                        <textarea class="form-control required commentable" name="ia_germplasm_explain"
+                                  rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        2.1.b If the reporting of transfers pursuant to an SMTA is not automated (e.g. the Center uses
+                        EasySMTA), please confirm whether the SMTA transfers made during the IA reporting period have
+                        been officially reported to the International Treaty. (Note, the official requirement
+                        commitment is to report every 2 years)
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="radio-list" data-error-container="#ia_smta_error">
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_smta" class="required related_explain_box commentable"
+                                       data-target="ia_smta_explain" value="1" data-show_value="0"> Yes
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_smta" class="required related_explain_box"
+                                       data-target="ia_smta_explain" value="0" data-show_value="0"> No </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_smta" class="required related_explain_box"
+                                       data-target="ia_smta_explain" value="2" data-show_value="0">
+                                Not applicable as there have been no transfers of MLS materials
+                            </label>
+                        </div>
+                        <div id="ia_smta_error"></div>
+                    </div>
+                </div>
+                <div class="form-group ia_smta_explain" style="display: none">
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6">
+                        <label class="control-label">Please Explain:
+                            <span class="required"> * </span>
+                        </label>
+                        <textarea class="form-control required commentable" name="ia_smta_explain" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>2.2. Measures for ensuring that acquisition and transfer of genetic resources is conducted in
+                            accordance with applicable laws</b>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6">
+                        Please confirm whether your Center has in place policies, principles, guidelines, procedures,
+                        good practices and/or any other relevant measure, to ensure compliance with applicable laws
+                        implementing the CBD and the Nagoya Protocol when acquiring and transferring genetic resources
+                        outside the MLS of the ITPGRFA.
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="radio-list" data-error-container="#ia_policies_error">
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_policies" class="required commentable" value="1"> Yes
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="ia_policies" class="required" value="0"> No
+                            </label>
+                        </div>
+                        <div id="ia_policies_error"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6">
+                        <label class="control-label">Please Explain:
+                        </label>
+                        <textarea class="form-control commentable" name="ia_policies_explain" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-12">
+                        <b>2.3. Farmers Rights</b> <span class="required"> * </span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <label>
+                            Please provide relevant highlights, trends, case studies, practices that your Center would
+                            like to highlight for the Annual IA Management Report regarding Farmers Rights.
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <textarea class="form-control required commentable" name="ia_highlights_explain" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <b>2.4. Anything else to report regarding this section</b>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-6"></label>
+                    <div class="col-md-6">
+                        <textarea class="form-control commentable" name="ia_additional_notes_2" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!--  section 2  --->
+
+        <div class="portlet box mel-brown" id="ia_section_3a">
+            <div class="portlet-title">
+                <div class="caption">
+                    <b>SECTION 3:</b>
+                </div>
+                <div class="tools">
+                    <a href="javascript:;" class="collapse">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <!-- info for IA Agreements --->
+                <div class="table-toolbar">
+                    <p>
+                        <b>
+                            3.1. Reporting of Limited Exclusivity Agreements, Restricted Use Agreements, and IP
+                            Applications
+                        </b>
+                        <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                        <input type="hidden" class="commentable" name="ia_agreements_general"
+                               data-comment_box_auto_add="false">
+                    </p>
+                    <p>
+                        Note 1: Information submitted in this section is confidential by default. You can use the
+                        radio-buttons in the Form to mark specific fields as non-confidential.
+                    </p>
+                    <p style="color: #bd0000">
+                        Note 2: IP applications which advance from a provisional to a non-provisional status must be
+                        reported as a new restricted arrangement in the year in which the non-provisional status
+                        occurs. Thereafter updates on progress are reported through the Center IA portfolio in
+                        section 1 subsection 5 above.
+                    </p>
+                    <?php if ($this->can_edit_ia_report) { ?>
+                        <div class="btn-group">
+                            <button class="btn btn-default stripe-down-blue strip-down btn_edit_ia_agreement"
+                                    type="button">
+                                Add New <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    <?php } ?>
+                </div>
+                <div class="table_holder" id="ia_agreement_table_holder"></div>
+
+                <hr>
+
+                <div class="table-toolbar">
+                    <p>
+                        <b>
+                            3.2. Public disclosures associated with Limited Exclusivity Agreements, Restricted Use
+                            Agreements, and IP Applications
+                            <i class="fa fa-comments-o add-comment" style="position: initial;"></i>
+                            <input type="hidden" class="commentable" name="ia_public_disclosures_general"
+                                   data-comment_box_auto_add="false">
+                        </b>
+                    </p>
+                    <?php if ($this->can_edit_ia_report) { ?>
+                        <div class="btn-group">
+                            <button class="btn btn-default stripe-down-blue strip-down btn_edit_ia_agreement_public_disclosure"
+                                    type="button">
+                                Add New <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    <?php } ?>
+                </div>
+                <div class="table_holder" id="ia_agreement_public_disclosure_table_holder"></div>
+            </div>
+        </div>
+        <!--  section 3  --->
+    </div>
+</form>
+
+<div class="row">
+    <div class="col-md-12" style="text-align: center;">
+        <?php if ($this->can_edit_ia_report) { ?>
+            <button type="button" class="btn btn-md green form_submit" data-form="#ia_form" data-is_draft="1"
+                    data-submit_review="0">
+                Save as draft
+            </button>
+            <button type="button" class="btn btn-md green-haze form_submit" data-form="#ia_form" data-is_draft="0"
+                    data-submit_review="1">
+                <?= $this->ia_report['is_draft'] == '0' ? 'Submit IP Report for final review' : 'Submit IP Report' ?>
+            </button>
+        <?php } elseif (App_Function_Privileges::canReviewIAReport(null) && $this->ia_report['is_draft'] == '0' && $this->can_review_ia_report) { ?>
+            <button type="button" class="btn btn-md green form_submit"
+                    data-form="#ia_form" data-is_review="true" data-user_group_to="11">
+                Return to Center for follow-up
+            </button>
+            <button type="button" class="btn btn-md green-haze form_submit"
+                    data-form="#ia_form" data-is_review="true" data-user_group_to="0">
+                Submit final review
+            </button>
+        <?php } ?>
+    </div>
+</div>
+
+<?php $this->placeholder('styleVars')->captureStart(); ?>
+.portlet.box.mel-blue > .portlet-title {
+background-color: #5090d0;
+}
+.portlet.box.mel-blue {
+border: 1px solid #5090d0;
+border-top: 0;
+}
+.portlet.box.mel-green > .portlet-title {
+background-color: #5f7357;
+}
+.portlet.box.mel-green {
+border: 1px solid #5f7357;
+border-top: 0;
+}
+.portlet.box.mel-brown > .portlet-title {
+background-color: #bf895b;
+}
+.portlet.box.mel-brown {
+border: 1px solid #bf895b;
+border-top: 0;
+}
+<?php $this->placeholder('styleVars')->captureEnd(); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css', 'screen'); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/bootstrap-wysihtml5/bootstrap-wysihtml5.css', 'screen'); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/bootstrap-switch/css/bootstrap-switch.css', 'screen'); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker.css', 'screen'); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets/admin/pages/css/profile.css', 'screen'); ?>
+<?php $this->headLink()->appendStylesheet($this->baseUrl() . '/assets_v2/global/plugins/comment-box/css/comment-box.css', 'screen'); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/datatables/media/js/jquery.dataTables.min.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/jquery-validation/js/jquery.validate.min.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/jquery-validation/js/additional-methods.min.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/global/plugins/jquery.form.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/plupload/js/plupload.full.min.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets_v2/global/plugins/comment-box/js/comment-box.js'); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/admin/pages/scripts/ia/table-managed.js'); ?>
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/admin/pages/scripts/ia/events-handler.js'); ?>
+<?php $this->placeholder('jsvars')->captureStart(); ?>
+const ia_report_data_json = JSON.parse('<?= addslashes(Zend_Json::encode($this->ia_report)) ?>');
+const GetIaReportDataLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'getiareport', 'partner_id' => $this->ia_report['partner_id']), null, true) ?>';
+const SubmitIaReportReviewLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'submitiareportreview'), null, true) ?>';
+
+<?php $this->placeholder('jsvars')->captureEnd() ?>
+
+<?= $this->partial('/ia/iaReportTablesAndForms.phtml', array(
+    'ia_report' => $this->ia_report,
+    'portfolio_titles' => $this->portfolio_titles,
+    'ia_report_review_user_group_to' => $this->ia_report_review->user_group_to,
+    'ia_report_review_page' => false
+)); ?>
+

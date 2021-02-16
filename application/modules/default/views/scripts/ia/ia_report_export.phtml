@@ -1,0 +1,190 @@
+<!-- modal to export pdf -->
+<div id="ia_report_pdf_export_modal" class="modal container fade" tabindex="-1" data-backdrop="static"
+     data-keyboard="false">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h4 class="modal-title">Center IA reporting PDF export</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <form>
+                    <input type="hidden" class="export_options" name="ia_report_id">
+                    <input type="hidden" class="export_options" name="reporting_year">
+                    <div class="form-body">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Which sections to include
+                                </label>
+                                <div class="checkbox-list">
+                                    <label class="checkbox-inline">
+                                        <input class="export_options" type="checkbox" name="sections[]" value="1"
+                                               checked> Section 1
+                                    </label>
+                                    <label class="checkbox-inline">
+                                        <input class="export_options" type="checkbox" name="sections[]" value="2"
+                                               checked> Section 2
+                                    </label>
+                                    <label class="checkbox-inline">
+                                        <input class="export_options" type="checkbox" name="sections[]" value="3"
+                                               checked> Section 3
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 embedded_comments">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Do you want modifications to be marked-up?
+                                </label>
+                                <div class="radio-list">
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="show_center_feedback" value="1"
+                                               checked> Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="show_center_feedback"
+                                               value="0"> No
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 embedded_comments">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Do you want to include comments and responses?
+                                </label>
+                                <div class="radio-list">
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="embedded_comments" value="1"
+                                               checked> Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="embedded_comments" value="0">
+                                        No
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 section_3_related">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Do you want to include only unique items in section 3?
+                                </label>
+                                <div class="radio-list">
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="unique" value="1" checked> Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="unique" value="0">
+                                        No
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 section_3_related">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Do you want to include reviewer feedback in section 3?
+                                </label>
+                                <div class="radio-list">
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="section_3_review" value="1"
+                                               checked> Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input class="export_options" type="radio" name="section_3_review" value="0"> No
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 section_3_related section_3_related_reviews">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Which review rounds for section 3 do you want to include?
+                                </label>
+
+                                <div class="checkbox-list">
+                                    <?php
+                                    $_isCenter = App_Function_Privileges::isAdmin() || App_Function_Privileges::isMemberOf(11) || App_Function_Privileges::isIaReportContact(null);
+                                    $_isSMO = App_Function_Privileges::isAdmin() || App_Function_Privileges::isMemberOf(12);
+                                    $_isMLS = App_Function_Privileges::isAdmin() || App_Function_Privileges::isMemberOf(28);
+                                    $_isSCIPG = App_Function_Privileges::isAdmin() || App_Function_Privileges::isMemberOf(29);
+
+                                    if ($_isSMO || $_isMLS) { ?>
+                                        <label class="checkbox-list">
+                                            <input class="export_options" type="checkbox" name="reviews[]"
+                                                   value="12-28" checked> SMO to ABS
+                                        </label>
+                                        <label class="checkbox-list">
+                                            <input class="export_options" type="checkbox" name="reviews[]"
+                                                   value="28-12" checked> ABS to SMO
+                                        </label>
+                                    <?php } ?>
+                                    <?php if ($_isSMO || $_isSCIPG) { ?>
+                                        <label class="checkbox-list">
+                                            <input class="export_options" type="checkbox" name="reviews[]"
+                                                   value="12-29" checked> SMO to SCIPG
+                                        </label>
+                                        <label class="checkbox-list">
+                                            <input class="export_options" type="checkbox" name="reviews[]"
+                                                   value="29-12" checked> SCIPG to SMO
+                                        </label>
+                                    <?php } ?>
+                                    <?php if ($_isSMO || $_isSCIPG || $_isCenter) { ?>
+                                        <label class="checkbox-list">
+                                            <input class="export_options" type="checkbox" name="reviews[]"
+                                                   value="12-11" checked> SMO to Center
+                                        </label>
+                                        <label class="checkbox-list">
+                                            <input class="export_options" type="checkbox" name="reviews[]"
+                                                   value="11-12" checked> Center feedback
+                                        </label>
+                                    <?php } ?>
+                                    <label class="checkbox-list">
+                                        <input class="export_options" type="checkbox" name="reviews[]"
+                                               value="12-" checked> Final review
+                                    </label>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-default export_pdf_link" target="_blank">
+            Download <i class="fa fa-file-pdf-o" style="color: #e7505a"></i>
+        </a>
+        <a href="javascript:void(0);" class="btn green generate_export_pdf_link">
+            Generate export link
+        </a>
+        <button type="button" data-dismiss="modal" class="btn btn-default">Cancel</button>
+    </div>
+</div>
+
+<?php $this->placeholder('styleVars')->captureStart(); ?>
+#ia_report_pdf_export_modal {
+width: 640px !important;
+margin-left: -320px !important;
+}
+<?php $this->placeholder('styleVars')->captureEnd(); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/admin/pages/scripts/ia/main-table-managed.js'); ?>
+
+<?php $this->placeholder('jsvars')->captureStart(); ?>
+<?php $this->placeholder('jsvars')->captureEnd() ?>
+
+<?php $this->placeholder('jscalls')->captureStart(); ?>
+MainTableManaged.exportEvents();
+<?php $this->placeholder('jscalls')->captureEnd() ?>
+

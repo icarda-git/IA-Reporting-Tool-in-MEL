@@ -1,0 +1,250 @@
+<!-- modal to add review -->
+<div id="ia_report_agreement_review_modal" class="modal container fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h4 class="modal-title">Review</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12 previous_reviews">
+
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <form action="<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'submitiareportagrementreview'), null, true) ?>"
+                      id="ia_report_agreement_review_form" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="user_group_to">
+                    <input type="hidden" name="ia_report_id">
+                    <input type="hidden" name="ia_agreement_id">
+                    <input type="hidden" name="related_items_confirmed">
+
+                    <div class="form-body">
+                        <div class="alert alert-danger display-hide">
+                            <button class="close" data-close="alert"></button>
+                            You have some errors. Please check below.
+                        </div>
+
+                        <!--Grade -->
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Grade <span class="required"> * </span>
+                                </label>
+                                <select class="form-control required select2" name="grade"
+                                        data-placeholder="Select Grade...">
+                                    <option value=""></option>
+                                    <option value="0">Pending</option>
+                                    <option value="1">Unsatisfactory</option>
+                                    <option value="2">Satisfactory</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Internal Comments
+                                    <i class="fa fa-exclamation-circle popovers"
+                                       data-trigger="hover" data-placement="top" data-container="body"
+                                       data-content="Internal comments will not be visible by the review recipient or others."></i>
+                                </label>
+                                <textarea class="form-control" name="comments" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Justification
+                                </label>
+                                <textarea class="form-control" name="justification_comments" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    MLS/ABS
+                                </label>
+                                <textarea class="form-control" name="mls_abs_comments" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Evaluation
+                                </label>
+                                <textarea class="form-control" name="evaluation_comments" rows="5"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn green review_form_submit" data-user_group_to="-1"
+                data-form="#ia_report_agreement_review_form">
+            Save review as draft
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="28"
+                data-form="#ia_report_agreement_review_form">
+            Submit review to MLS
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="29"
+                data-form="#ia_report_agreement_review_form">
+            Submit review to SCIPG
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="12"
+                data-form="#ia_report_agreement_review_form">
+            Submit review to SMO
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="11"
+                data-form="#ia_report_agreement_review_form">
+            Submit review to the Center for follow-up
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="0"
+                data-form="#ia_report_agreement_review_form">
+            Submit final review
+        </button>
+        <button type="button" data-dismiss="modal" class="btn btn-default">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<div id="ia_report_public_disclosure_review_modal" class="modal container fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h4 class="modal-title">Review</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12 previous_reviews">
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <form action="<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'submitiareportpublicdisclosurereview'), null, true) ?>"
+                      id="ia_report_public_disclosure_review_form" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="user_group_to">
+                    <input type="hidden" name="ia_report_id">
+                    <input type="hidden" name="ia_agreement_public_disclosure_id">
+                    <input type="hidden" name="related_items_confirmed">
+
+                    <div class="form-body">
+                        <div class="alert alert-danger display-hide">
+                            <button class="close" data-close="alert"></button>
+                            You have some errors. Please check below.
+                        </div>
+
+                        <!--Grade -->
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Grade <span class="required"> * </span>
+                                </label>
+                                </label>
+                                <select class="form-control required select2" name="grade"
+                                        data-placeholder="Select Grade...">
+                                    <option value=""></option>
+                                    <option value="0">Pending</option>
+                                    <option value="1">Improvements recommended</option>
+                                    <option value="3">Significant improvements recommended (potential compliance or
+                                        reputational risk issue)
+                                    </option>
+                                    <option value="2">Appears to be satisfactory</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Internal Comments
+                                    <i class="fa fa-exclamation-circle popovers"
+                                       data-trigger="hover" data-placement="top" data-container="body"
+                                       data-content="Internal comments will not be visible by the review recipient or others."></i>
+                                </label>
+                                <textarea class="form-control" name="comments" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="control-label">
+                                    Comments
+                                </label>
+                                <textarea class="form-control" name="external_comments" rows="5"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn green review_form_submit" data-user_group_to="-1"
+                data-form="#ia_report_public_disclosure_review_form">
+            Save review as draft
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="28"
+                data-form="#ia_report_public_disclosure_review_form">
+            Submit review to MLS
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="29"
+                data-form="#ia_report_public_disclosure_review_form">
+            Submit review to SCIPG
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="12"
+                data-form="#ia_report_public_disclosure_review_form">
+            Submit review to SMO
+        </button>
+        <button type="button" class="btn green review_form_submit" data-user_group_to="11"
+                data-form="#ia_report_public_disclosure_review_form">
+            Submit review to the Center for follow-up
+        <button type="button" class="btn green review_form_submit" data-user_group_to="0"
+                data-form="#ia_report_public_disclosure_review_form">
+            Submit final review
+        </button>
+        <button type="button" data-dismiss="modal" class="btn btn-default">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<?php $this->placeholder('styleVars')->captureStart(); ?>
+.previous_reviews .review-block {
+margin-bottom: 15px;
+}
+.previous_reviews .review-block.grade-0 {
+border-left: 5px solid #F1C40F;
+}
+.previous_reviews .review-block.grade-1, .previous_reviews .review-block.grade-3 {
+border-left: 5px solid #e7505a;
+}
+.previous_reviews .review-block.grade-2 {
+border-left: 5px solid #5f7357;
+}
+.previous_reviews .review-block.grade-null, .previous_reviews .review-block.grade- {
+border-left: 5px solid #cccccc;
+}
+.previous_reviews .review-block.center-revise {
+border-left: 5px solid #5090d0;
+}
+.previous_reviews .no_review_available {
+text-align: center;
+font-size: x-large;
+color: #cccccc;
+}
+<?php $this->placeholder('styleVars')->captureEnd(); ?>
+
+<?php $this->headScript()->appendFile($this->baseUrl() . '/assets/admin/pages/scripts/ia/review-events-handler.js'); ?>
+<?php $this->placeholder('jsvars')->captureStart(); ?>
+
+const CheckIaReportAgreementReviewStatusLink = '<?= $this->url(array('module' => 'default', 'controller' => 'ia', 'action' => 'checkiareportagreementreviewstatus'), null, true) ?>';
+
+<?php $this->placeholder('jsvars')->captureEnd() ?>
+<?php $this->placeholder('jscalls')->captureStart(); ?>
+IaReviewEvents.init();
+<?php $this->placeholder('jscalls')->captureEnd() ?>
+

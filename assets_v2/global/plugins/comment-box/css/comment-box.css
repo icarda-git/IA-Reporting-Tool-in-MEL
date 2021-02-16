@@ -1,0 +1,149 @@
+div.comments-box.popover {
+    transition: all .2s linear;
+}
+
+div.comments-box.popover i.fa.collapse-comment-box {
+    display: none;
+}
+
+div.comments-box.popover.expanded i.fa.collapse-comment-box {
+    display: inline;
+}
+
+div.comments-box.popover.expanded i.fa.expand-comment-box {
+    display: none;
+}
+
+div.comments-box.popover.expanded {
+    max-width: 90%;
+    width: 90%;
+    max-height: 90%;
+    left: 5% !important;
+    overflow-y: scroll;
+}
+
+div.comments-box.popover.expanded > .popover-content {
+    width: auto;
+    height: auto;
+}
+
+div.comments-box.popover > .popover-content {
+    width: 500px;
+    height: 200px;
+    overflow: auto;
+}
+
+div.comments-box.popover > .arrow {
+    left: 10px;
+}
+
+div.comments-box.popover > .popover-title > .btn-close-comment {
+    float: right;
+    cursor: pointer;
+}
+
+div.comments-box.popover .comment-box {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: solid 1px #cccccc;
+    position: relative;
+}
+
+div.comments-box.popover .comment-box:last-child {
+    border-bottom: none;
+}
+
+div.comments-box.popover .no-comments {
+    text-align: center;
+    font-size: x-large;
+    color: #cccccc;
+}
+
+div.comments-box.popover .comment-box .btn-discard-comment {
+    position: absolute;
+    right: 5px;
+    top: 2px;
+    cursor: pointer;
+    color: #cccccc;
+}
+
+div.comments-box.popover .comment-box > .comment-tool-box {
+    margin-top: 3px;
+    margin-bottom: 3px;
+    width: 100%;
+    text-align: right;
+}
+
+div.comments-box.popover .comment-box > .comment-tool-box button {
+    float: right;
+}
+
+div.comments-box.popover .comment-box > .comment-tool-box > label.is_public {
+    float: left;
+}
+
+div.comments-box.popover .comment-box > .comment-tool-box > label.is_public > .checkbox-list .checkbox-inline {
+    padding-left: 0;
+}
+
+div.comments-box.popover > .popover-content textarea {
+    resize: vertical;
+}
+
+div.comments-box.popover > .popover-content .comment-content {
+    margin-left: 10px;
+    white-space: pre-line;
+}
+
+div.comments-box.popover > .popover-content .comment-info {
+    width: 100%;
+}
+
+div.comments-box.popover > .popover-content .comment-info > .fa.fa-users:not(.not_shared) {
+    color: #508fd0;
+}
+
+div.comments-box.popover > .popover-content .comment-info .comment-date {
+    float: right;
+}
+
+div.comments-box.popover > .popover-content .comment-box.deleted-comment {
+    opacity: .5;
+    font-style: italic;
+}
+
+div.comments-box.popover > .popover-content .comment-box-textarea:before {
+    content: " ";
+    position: absolute;
+    border: 5px solid #c2c9d8;
+    left: -10px;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+div.comments-box.popover > .popover-content .comment-box-textarea:after {
+    content: " ";
+    position: absolute;
+    border: 7px solid #fff;
+    left: -8px;
+    top: 1px;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+div.comments-box.popover > .popover-content .comment-box-textarea textarea.form-control:focus {
+    border-color: #c1c8d8;
+}
+
+i.fa.add-comment {
+    position: absolute;
+    font-size: x-large;
+    cursor: pointer;
+}
